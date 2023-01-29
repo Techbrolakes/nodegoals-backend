@@ -126,32 +126,10 @@ var generateToken = (id) => {
   });
 };
 
-// src/middleware/authMiddleware.ts
-var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
-var import_dotenv2 = __toESM(require("dotenv"));
-import_dotenv2.default.config();
-var authMiddleware = (req, res, next) => __async(void 0, null, function* () {
-  const token = req.body.token || req.query.token || req.headers["x-auth-token"];
-  if (!token) {
-    return res.status(403).json({ message: "No token, authorization denied" });
-  }
-  try {
-    const decoded = import_jsonwebtoken2.default.verify(token, process.env.JWT_SECRET || "jwt");
-    req.token = decoded;
-  } catch (error) {
-    res.status(401).json({ message: "Token is not valid" });
-  }
-  next();
-});
-var authMiddleware_default = authMiddleware;
-
 // src/routes/UserRoutes.ts
 var router = import_express.default.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.get("/private", authMiddleware_default, (req, res) => {
-  res.json({ msg: "Welcome to private route" });
-});
 var UserRoutes_default = router;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {});
