@@ -1476,7 +1476,7 @@ var require_morgan = __commonJS({
 
 // src/app.ts
 var import_express2 = __toESM(require("express"));
-var import_dotenv2 = __toESM(require("dotenv"));
+var import_dotenv3 = __toESM(require("dotenv"));
 
 // node_modules/module-alias/register.js
 require_module_alias()();
@@ -1501,34 +1501,82 @@ var import_express = __toESM(require("express"));
 // src/models/UserModel.ts
 var import_mongoose2 = require("mongoose");
 var userSchema = new import_mongoose2.Schema({
-  first_name: { type: String, required: true },
-  last_name: { type: String, required: true },
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-  confirm_password: { type: String, required: true }
+  first_name: { type: String, required: [true, "first name required"] },
+  last_name: { type: String, required: [true, "last name required"] },
+  email: { type: String, required: [true, "email required"], unique: true },
+  password: { type: String, required: [true, "password required"] },
+  confirm_password: { type: String, required: [true, "confirm password required"] }
 });
 var User = (0, import_mongoose2.model)("Users", userSchema);
 var UserModel_default = User;
 
 // src/controllers/userController.ts
+var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
+var import_bcrypt = __toESM(require("bcrypt"));
+var import_dotenv2 = __toESM(require("dotenv"));
+import_dotenv2.default.config();
 var registerUser = (req, res) => __async(void 0, null, function* () {
   const { first_name, last_name, email, password, confirm_password } = req.body;
-  if (!first_name || !last_name || !email || !password || !confirm_password) {
-    return res.status(400).json({ message: "Please add all fields" });
+  const userExists = yield UserModel_default.findOne({ email });
+  if (userExists) {
+    return res.status(400).json({ message: "User already exists" });
   }
-  const newUser = new UserModel_default({ first_name, last_name, email, password, confirm_password });
+  if (!password) {
+    return res.status(400).json({ message: "password required" });
+  }
+  if (!confirm_password) {
+    return res.status(400).json({ message: "confirm password required" });
+  }
+  const salt = yield import_bcrypt.default.genSalt(10);
+  const hash_password = yield import_bcrypt.default.hash(password, salt);
+  const hash_confirm_password = yield import_bcrypt.default.hash(confirm_password, salt);
   try {
-    yield newUser.save();
-    res.send({ message: "User registered successfully" });
+    const user = yield UserModel_default.create({ first_name, last_name, email, password: hash_password, confirm_password: hash_confirm_password });
+    if (user) {
+      res.status(201).json({
+        success: true,
+        message: "User created successfully",
+        data: {
+          _id: user._id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          password: user.password,
+          confirm_password: user.confirm_password,
+          token: generateToken(user._id)
+        }
+      });
+    }
   } catch (error) {
-    console.error(error);
-    res.status(500).send({ error: "Server error" });
+    return res.status(400).json({ message: error.message });
   }
 });
+var loginUser = (req, res) => __async(void 0, null, function* () {
+  const { email, password } = req.body;
+  const user = yield UserModel_default.findOne({ email });
+  if (!user) {
+    return res.status(400).json({ success: false, message: "Email does not exist" });
+  }
+  if (user && (yield import_bcrypt.default.compare(password, user.password))) {
+    res.status(201).json({
+      success: true,
+      message: "User Successfully Logged in",
+      token: generateToken(user._id)
+    });
+  } else {
+    return res.status(400).json({ success: false, message: "Invalid Password" });
+  }
+});
+var generateToken = (id) => {
+  return import_jsonwebtoken.default.sign({ id }, process.env.JWT_SECRET || "jwt", {
+    expiresIn: "30d"
+  });
+};
 
 // src/routes/UserRoutes.ts
 var router = import_express.default.Router();
 router.post("/register", registerUser);
+router.post("/login", loginUser);
 var UserRoutes_default = router;
 
 // src/app.ts
@@ -1536,7 +1584,7 @@ var port = process.env.PORT || 5e3;
 var app = (0, import_express2.default)();
 app.use(import_express2.default.json());
 app.use((0, import_morgan.default)("tiny"));
-import_dotenv2.default.config();
+import_dotenv3.default.config();
 app.use("/api/v1/user", UserRoutes_default);
 app.get("/", (req, res) => {
   res.send("Hello Node Js!");

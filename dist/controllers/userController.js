@@ -43,13 +43,13 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/routes/UserRoutes.ts
-var UserRoutes_exports = {};
-__export(UserRoutes_exports, {
-  default: () => UserRoutes_default
+// src/controllers/userController.ts
+var userController_exports = {};
+__export(userController_exports, {
+  loginUser: () => loginUser,
+  registerUser: () => registerUser
 });
-module.exports = __toCommonJS(UserRoutes_exports);
-var import_express = __toESM(require("express"));
+module.exports = __toCommonJS(userController_exports);
 
 // src/models/UserModel.ts
 var import_mongoose = require("mongoose");
@@ -125,11 +125,8 @@ var generateToken = (id) => {
     expiresIn: "30d"
   });
 };
-
-// src/routes/UserRoutes.ts
-var router = import_express.default.Router();
-router.post("/register", registerUser);
-router.post("/login", loginUser);
-var UserRoutes_default = router;
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {});
+0 && (module.exports = {
+  loginUser,
+  registerUser
+});
