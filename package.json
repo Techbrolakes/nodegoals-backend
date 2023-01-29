@@ -46,8 +46,9 @@
   },
   "_moduleAliases": {
     "@routes/*": "dist/routes/*",
-    "@controllers/*": "dist/controllers",
-    "models/*": "dist/models",
-    "config/*": "dist/config"
+    "@controllers/*": "dist/controllers/*",
+    "models/*": "dist/models/*",
+    "config/*": "dist/config/*",
+    "middleware/*": "dist/middleware/*"
   }
 }

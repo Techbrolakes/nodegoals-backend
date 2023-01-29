@@ -17,6 +17,7 @@
       "@models/*":["models/*"],
       "@controllers/*":["controllers/*"],
       "@config/*":["config/*"],
+      "@middleware/*":["middleware/*"],
     },                                      
   }
 }

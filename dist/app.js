@@ -1476,7 +1476,7 @@ var require_morgan = __commonJS({
 
 // src/app.ts
 var import_express2 = __toESM(require("express"));
-var import_dotenv3 = __toESM(require("dotenv"));
+var import_dotenv4 = __toESM(require("dotenv"));
 
 // node_modules/module-alias/register.js
 require_module_alias()();
@@ -1573,10 +1573,32 @@ var generateToken = (id) => {
   });
 };
 
+// src/middleware/authMiddleware.ts
+var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
+var import_dotenv3 = __toESM(require("dotenv"));
+import_dotenv3.default.config();
+var authMiddleware = (req, res, next) => __async(void 0, null, function* () {
+  const token = req.body.token || req.query.token || req.headers["x-auth-token"];
+  if (!token) {
+    return res.status(403).json({ message: "No token, authorization denied" });
+  }
+  try {
+    const decoded = import_jsonwebtoken2.default.verify(token, process.env.JWT_SECRET || "jwt");
+    req.token = decoded;
+  } catch (error) {
+    res.status(401).json({ message: "Token is not valid" });
+  }
+  next();
+});
+var authMiddleware_default = authMiddleware;
+
 // src/routes/UserRoutes.ts
 var router = import_express.default.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.get("/private", authMiddleware_default, (req, res) => {
+  res.json({ msg: "Welcome to private route" });
+});
 var UserRoutes_default = router;
 
 // src/app.ts
@@ -1584,7 +1606,7 @@ var port = process.env.PORT || 5e3;
 var app = (0, import_express2.default)();
 app.use(import_express2.default.json());
 app.use((0, import_morgan.default)("tiny"));
-import_dotenv3.default.config();
+import_dotenv4.default.config();
 app.use("/api/v1/user", UserRoutes_default);
 app.get("/", (req, res) => {
   res.send("Hello Node Js!");
