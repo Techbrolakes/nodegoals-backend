@@ -1497,10 +1497,38 @@ var import_morgan = __toESM(require_morgan());
 
 // src/routes/UserRoutes.ts
 var import_express = __toESM(require("express"));
-var router = import_express.default.Router();
-router.get("/register", (req, res) => {
-  res.send("Registering Users.........");
+
+// src/models/UserModel.ts
+var import_mongoose2 = require("mongoose");
+var userSchema = new import_mongoose2.Schema({
+  first_name: { type: String, required: true },
+  last_name: { type: String, required: true },
+  email: { type: String, required: true },
+  password: { type: String, required: true },
+  confirm_password: { type: String, required: true }
 });
+var User = (0, import_mongoose2.model)("Users", userSchema);
+var UserModel_default = User;
+
+// src/controllers/userController.ts
+var registerUser = (req, res) => __async(void 0, null, function* () {
+  const { first_name, last_name, email, password, confirm_password } = req.body;
+  if (!first_name || !last_name || !email || !password || !confirm_password) {
+    return res.status(400).json({ message: "Please add all fields" });
+  }
+  const newUser = new UserModel_default({ first_name, last_name, email, password, confirm_password });
+  try {
+    yield newUser.save();
+    res.send({ message: "User registered successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Server error" });
+  }
+});
+
+// src/routes/UserRoutes.ts
+var router = import_express.default.Router();
+router.post("/register", registerUser);
 var UserRoutes_default = router;
 
 // src/app.ts

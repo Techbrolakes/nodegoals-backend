@@ -12,11 +12,6 @@ app.use(express.json())
 app.use(morgan('tiny'))
 dotenv.config();
 
-// app.use("*", async (err: Error, req: Request, res: Response) => {
-//     res.json({
-//         message: err.message || "An Unknown Error occurred"
-//     })
-// })
 
 app.use("/api/v1/user", userRoutes)
  
