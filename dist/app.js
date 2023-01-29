@@ -43,7 +43,7 @@ var __async = (__this, __arguments, generator) => {
 
 // node_modules/module-alias/index.js
 var require_module_alias = __commonJS({
-  "node_modules/module-alias/index.js"(exports2, module2) {
+  "node_modules/module-alias/index.js"(exports, module2) {
     "use strict";
     var BuiltinModule = require("module");
     var Module = module2.constructor.length > 1 ? module2.constructor : BuiltinModule;
@@ -203,7 +203,7 @@ var require_module_alias = __commonJS({
 
 // node_modules/basic-auth/node_modules/safe-buffer/index.js
 var require_safe_buffer = __commonJS({
-  "node_modules/basic-auth/node_modules/safe-buffer/index.js"(exports2, module2) {
+  "node_modules/basic-auth/node_modules/safe-buffer/index.js"(exports, module2) {
     var buffer = require("buffer");
     var Buffer2 = buffer.Buffer;
     function copyProps(src, dst) {
@@ -214,8 +214,8 @@ var require_safe_buffer = __commonJS({
     if (Buffer2.from && Buffer2.alloc && Buffer2.allocUnsafe && Buffer2.allocUnsafeSlow) {
       module2.exports = buffer;
     } else {
-      copyProps(buffer, exports2);
-      exports2.Buffer = SafeBuffer;
+      copyProps(buffer, exports);
+      exports.Buffer = SafeBuffer;
     }
     function SafeBuffer(arg, encodingOrOffset, length) {
       return Buffer2(arg, encodingOrOffset, length);
@@ -260,7 +260,7 @@ var require_safe_buffer = __commonJS({
 
 // node_modules/basic-auth/index.js
 var require_basic_auth = __commonJS({
-  "node_modules/basic-auth/index.js"(exports2, module2) {
+  "node_modules/basic-auth/index.js"(exports, module2) {
     "use strict";
     var Buffer2 = require_safe_buffer().Buffer;
     module2.exports = auth;
@@ -309,7 +309,7 @@ var require_basic_auth = __commonJS({
 
 // node_modules/morgan/node_modules/ms/index.js
 var require_ms = __commonJS({
-  "node_modules/morgan/node_modules/ms/index.js"(exports2, module2) {
+  "node_modules/morgan/node_modules/ms/index.js"(exports, module2) {
     var s = 1e3;
     var m = s * 60;
     var h = m * 60;
@@ -411,16 +411,16 @@ var require_ms = __commonJS({
 
 // node_modules/morgan/node_modules/debug/src/debug.js
 var require_debug = __commonJS({
-  "node_modules/morgan/node_modules/debug/src/debug.js"(exports2, module2) {
-    exports2 = module2.exports = createDebug.debug = createDebug["default"] = createDebug;
-    exports2.coerce = coerce;
-    exports2.disable = disable;
-    exports2.enable = enable;
-    exports2.enabled = enabled;
-    exports2.humanize = require_ms();
-    exports2.names = [];
-    exports2.skips = [];
-    exports2.formatters = {};
+  "node_modules/morgan/node_modules/debug/src/debug.js"(exports, module2) {
+    exports = module2.exports = createDebug.debug = createDebug["default"] = createDebug;
+    exports.coerce = coerce;
+    exports.disable = disable;
+    exports.enable = enable;
+    exports.enabled = enabled;
+    exports.humanize = require_ms();
+    exports.names = [];
+    exports.skips = [];
+    exports.formatters = {};
     var prevTime;
     function selectColor(namespace) {
       var hash = 0, i;
@@ -428,7 +428,7 @@ var require_debug = __commonJS({
         hash = (hash << 5) - hash + namespace.charCodeAt(i);
         hash |= 0;
       }
-      return exports2.colors[Math.abs(hash) % exports2.colors.length];
+      return exports.colors[Math.abs(hash) % exports.colors.length];
     }
     function createDebug(namespace) {
       function debug() {
@@ -445,7 +445,7 @@ var require_debug = __commonJS({
         for (var i = 0; i < args.length; i++) {
           args[i] = arguments[i];
         }
-        args[0] = exports2.coerce(args[0]);
+        args[0] = exports.coerce(args[0]);
         if ("string" !== typeof args[0]) {
           args.unshift("%O");
         }
@@ -454,7 +454,7 @@ var require_debug = __commonJS({
           if (match === "%%")
             return match;
           index++;
-          var formatter = exports2.formatters[format];
+          var formatter = exports.formatters[format];
           if ("function" === typeof formatter) {
             var val = args[index];
             match = formatter.call(self, val);
@@ -463,23 +463,23 @@ var require_debug = __commonJS({
           }
           return match;
         });
-        exports2.formatArgs.call(self, args);
-        var logFn = debug.log || exports2.log || console.log.bind(console);
+        exports.formatArgs.call(self, args);
+        var logFn = debug.log || exports.log || console.log.bind(console);
         logFn.apply(self, args);
       }
       debug.namespace = namespace;
-      debug.enabled = exports2.enabled(namespace);
-      debug.useColors = exports2.useColors();
+      debug.enabled = exports.enabled(namespace);
+      debug.useColors = exports.useColors();
       debug.color = selectColor(namespace);
-      if ("function" === typeof exports2.init) {
-        exports2.init(debug);
+      if ("function" === typeof exports.init) {
+        exports.init(debug);
       }
       return debug;
     }
     function enable(namespaces) {
-      exports2.save(namespaces);
-      exports2.names = [];
-      exports2.skips = [];
+      exports.save(namespaces);
+      exports.names = [];
+      exports.skips = [];
       var split = (typeof namespaces === "string" ? namespaces : "").split(/[\s,]+/);
       var len = split.length;
       for (var i = 0; i < len; i++) {
@@ -487,24 +487,24 @@ var require_debug = __commonJS({
           continue;
         namespaces = split[i].replace(/\*/g, ".*?");
         if (namespaces[0] === "-") {
-          exports2.skips.push(new RegExp("^" + namespaces.substr(1) + "$"));
+          exports.skips.push(new RegExp("^" + namespaces.substr(1) + "$"));
         } else {
-          exports2.names.push(new RegExp("^" + namespaces + "$"));
+          exports.names.push(new RegExp("^" + namespaces + "$"));
         }
       }
     }
     function disable() {
-      exports2.enable("");
+      exports.enable("");
     }
     function enabled(name) {
       var i, len;
-      for (i = 0, len = exports2.skips.length; i < len; i++) {
-        if (exports2.skips[i].test(name)) {
+      for (i = 0, len = exports.skips.length; i < len; i++) {
+        if (exports.skips[i].test(name)) {
           return false;
         }
       }
-      for (i = 0, len = exports2.names.length; i < len; i++) {
-        if (exports2.names[i].test(name)) {
+      for (i = 0, len = exports.names.length; i < len; i++) {
+        if (exports.names[i].test(name)) {
           return true;
         }
       }
@@ -520,15 +520,15 @@ var require_debug = __commonJS({
 
 // node_modules/morgan/node_modules/debug/src/browser.js
 var require_browser = __commonJS({
-  "node_modules/morgan/node_modules/debug/src/browser.js"(exports2, module2) {
-    exports2 = module2.exports = require_debug();
-    exports2.log = log;
-    exports2.formatArgs = formatArgs;
-    exports2.save = save;
-    exports2.load = load;
-    exports2.useColors = useColors;
-    exports2.storage = "undefined" != typeof chrome && "undefined" != typeof chrome.storage ? chrome.storage.local : localstorage();
-    exports2.colors = [
+  "node_modules/morgan/node_modules/debug/src/browser.js"(exports, module2) {
+    exports = module2.exports = require_debug();
+    exports.log = log;
+    exports.formatArgs = formatArgs;
+    exports.save = save;
+    exports.load = load;
+    exports.useColors = useColors;
+    exports.storage = "undefined" != typeof chrome && "undefined" != typeof chrome.storage ? chrome.storage.local : localstorage();
+    exports.colors = [
       "lightseagreen",
       "forestgreen",
       "goldenrod",
@@ -542,7 +542,7 @@ var require_browser = __commonJS({
       }
       return typeof document !== "undefined" && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance || typeof window !== "undefined" && window.console && (window.console.firebug || window.console.exception && window.console.table) || typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 || typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
     }
-    exports2.formatters.j = function(v) {
+    exports.formatters.j = function(v) {
       try {
         return JSON.stringify(v);
       } catch (err) {
@@ -551,7 +551,7 @@ var require_browser = __commonJS({
     };
     function formatArgs(args) {
       var useColors2 = this.useColors;
-      args[0] = (useColors2 ? "%c" : "") + this.namespace + (useColors2 ? " %c" : " ") + args[0] + (useColors2 ? "%c " : " ") + "+" + exports2.humanize(this.diff);
+      args[0] = (useColors2 ? "%c" : "") + this.namespace + (useColors2 ? " %c" : " ") + args[0] + (useColors2 ? "%c " : " ") + "+" + exports.humanize(this.diff);
       if (!useColors2)
         return;
       var c = "color: " + this.color;
@@ -574,9 +574,9 @@ var require_browser = __commonJS({
     function save(namespaces) {
       try {
         if (null == namespaces) {
-          exports2.storage.removeItem("debug");
+          exports.storage.removeItem("debug");
         } else {
-          exports2.storage.debug = namespaces;
+          exports.storage.debug = namespaces;
         }
       } catch (e) {
       }
@@ -584,7 +584,7 @@ var require_browser = __commonJS({
     function load() {
       var r;
       try {
-        r = exports2.storage.debug;
+        r = exports.storage.debug;
       } catch (e) {
       }
       if (!r && typeof process !== "undefined" && "env" in process) {
@@ -592,7 +592,7 @@ var require_browser = __commonJS({
       }
       return r;
     }
-    exports2.enable(load());
+    exports.enable(load());
     function localstorage() {
       try {
         return window.localStorage;
@@ -604,18 +604,18 @@ var require_browser = __commonJS({
 
 // node_modules/morgan/node_modules/debug/src/node.js
 var require_node = __commonJS({
-  "node_modules/morgan/node_modules/debug/src/node.js"(exports2, module2) {
+  "node_modules/morgan/node_modules/debug/src/node.js"(exports, module2) {
     var tty = require("tty");
     var util = require("util");
-    exports2 = module2.exports = require_debug();
-    exports2.init = init;
-    exports2.log = log;
-    exports2.formatArgs = formatArgs;
-    exports2.save = save;
-    exports2.load = load;
-    exports2.useColors = useColors;
-    exports2.colors = [6, 2, 3, 4, 5, 1];
-    exports2.inspectOpts = Object.keys(process.env).filter(function(key) {
+    exports = module2.exports = require_debug();
+    exports.init = init;
+    exports.log = log;
+    exports.formatArgs = formatArgs;
+    exports.save = save;
+    exports.load = load;
+    exports.useColors = useColors;
+    exports.colors = [6, 2, 3, 4, 5, 1];
+    exports.inspectOpts = Object.keys(process.env).filter(function(key) {
       return /^debug_/i.test(key);
     }).reduce(function(obj, key) {
       var prop = key.substring(6).toLowerCase().replace(/_([a-z])/g, function(_, k) {
@@ -640,15 +640,15 @@ var require_node = __commonJS({
     }
     var stream = 1 === fd ? process.stdout : 2 === fd ? process.stderr : createWritableStdioStream(fd);
     function useColors() {
-      return "colors" in exports2.inspectOpts ? Boolean(exports2.inspectOpts.colors) : tty.isatty(fd);
+      return "colors" in exports.inspectOpts ? Boolean(exports.inspectOpts.colors) : tty.isatty(fd);
     }
-    exports2.formatters.o = function(v) {
+    exports.formatters.o = function(v) {
       this.inspectOpts.colors = this.useColors;
       return util.inspect(v, this.inspectOpts).split("\n").map(function(str) {
         return str.trim();
       }).join(" ");
     };
-    exports2.formatters.O = function(v) {
+    exports.formatters.O = function(v) {
       this.inspectOpts.colors = this.useColors;
       return util.inspect(v, this.inspectOpts);
     };
@@ -659,7 +659,7 @@ var require_node = __commonJS({
         var c = this.color;
         var prefix = "  \x1B[3" + c + ";1m" + name + " \x1B[0m";
         args[0] = prefix + args[0].split("\n").join("\n" + prefix);
-        args.push("\x1B[3" + c + "m+" + exports2.humanize(this.diff) + "\x1B[0m");
+        args.push("\x1B[3" + c + "m+" + exports.humanize(this.diff) + "\x1B[0m");
       } else {
         args[0] = new Date().toUTCString() + " " + name + " " + args[0];
       }
@@ -717,18 +717,18 @@ var require_node = __commonJS({
     }
     function init(debug) {
       debug.inspectOpts = {};
-      var keys = Object.keys(exports2.inspectOpts);
+      var keys = Object.keys(exports.inspectOpts);
       for (var i = 0; i < keys.length; i++) {
-        debug.inspectOpts[keys[i]] = exports2.inspectOpts[keys[i]];
+        debug.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
       }
     }
-    exports2.enable(load());
+    exports.enable(load());
   }
 });
 
 // node_modules/morgan/node_modules/debug/src/index.js
 var require_src = __commonJS({
-  "node_modules/morgan/node_modules/debug/src/index.js"(exports2, module2) {
+  "node_modules/morgan/node_modules/debug/src/index.js"(exports, module2) {
     if (typeof process !== "undefined" && process.type === "renderer") {
       module2.exports = require_browser();
     } else {
@@ -739,7 +739,7 @@ var require_src = __commonJS({
 
 // node_modules/depd/index.js
 var require_depd = __commonJS({
-  "node_modules/depd/index.js"(exports2, module2) {
+  "node_modules/depd/index.js"(exports, module2) {
     var relative = require("path").relative;
     module2.exports = depd;
     var basePath = process.cwd();
@@ -1045,7 +1045,7 @@ var require_depd = __commonJS({
 
 // node_modules/ee-first/index.js
 var require_ee_first = __commonJS({
-  "node_modules/ee-first/index.js"(exports2, module2) {
+  "node_modules/ee-first/index.js"(exports, module2) {
     "use strict";
     module2.exports = first;
     function first(stuff, done) {
@@ -1101,7 +1101,7 @@ var require_ee_first = __commonJS({
 
 // node_modules/morgan/node_modules/on-finished/index.js
 var require_on_finished = __commonJS({
-  "node_modules/morgan/node_modules/on-finished/index.js"(exports2, module2) {
+  "node_modules/morgan/node_modules/on-finished/index.js"(exports, module2) {
     "use strict";
     module2.exports = onFinished;
     module2.exports.isFinished = isFinished;
@@ -1192,7 +1192,7 @@ var require_on_finished = __commonJS({
 
 // node_modules/on-headers/index.js
 var require_on_headers = __commonJS({
-  "node_modules/on-headers/index.js"(exports2, module2) {
+  "node_modules/on-headers/index.js"(exports, module2) {
     "use strict";
     module2.exports = onHeaders;
     function createWriteHead(prevWriteHead, listener) {
@@ -1253,7 +1253,7 @@ var require_on_headers = __commonJS({
 
 // node_modules/morgan/index.js
 var require_morgan = __commonJS({
-  "node_modules/morgan/index.js"(exports2, module2) {
+  "node_modules/morgan/index.js"(exports, module2) {
     "use strict";
     module2.exports = morgan2;
     module2.exports.compile = compile;
@@ -1475,7 +1475,7 @@ var require_morgan = __commonJS({
 });
 
 // src/app.ts
-var import_express = __toESM(require("express"));
+var import_express2 = __toESM(require("express"));
 var import_dotenv2 = __toESM(require("dotenv"));
 
 // node_modules/module-alias/register.js
@@ -1494,21 +1494,22 @@ var conn_default = connectDB;
 
 // src/app.ts
 var import_morgan = __toESM(require_morgan());
+
+// src/routes/UserRoutes.ts
+var import_express = __toESM(require("express"));
+var router = import_express.default.Router();
+router.get("/register", (req, res) => {
+  res.send("Registering Users.........");
+});
+var UserRoutes_default = router;
+
+// src/app.ts
 var port = process.env.PORT || 5e3;
-var app = (0, import_express.default)();
-app.use(import_express.default.json());
+var app = (0, import_express2.default)();
+app.use(import_express2.default.json());
 app.use((0, import_morgan.default)("tiny"));
 import_dotenv2.default.config();
-app.all("*", (req, res, next) => __async(exports, null, function* () {
-  return next(res.status(404).json({
-    message: "Invalid Route Boss"
-  }));
-}));
-app.use("*", (err, req, res) => __async(exports, null, function* () {
-  res.status(400).json({
-    message: err.message || "An Unknown Error occurred"
-  });
-}));
+app.use("/api/v1/user", UserRoutes_default);
 app.get("/", (req, res) => {
   res.send("Hello Node Js!");
 });

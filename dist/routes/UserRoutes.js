@@ -1,7 +1,9 @@
 "use strict";
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -15,23 +17,23 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/models/UserModel.ts
-var UserModel_exports = {};
-__export(UserModel_exports, {
-  default: () => UserModel_default
+// src/routes/UserRoutes.ts
+var UserRoutes_exports = {};
+__export(UserRoutes_exports, {
+  default: () => UserRoutes_default
 });
-module.exports = __toCommonJS(UserModel_exports);
-var import_mongoose = require("mongoose");
-var userSchema = new import_mongoose.Schema({
-  first_name: { type: String, required: true },
-  last_name: { type: String, required: true },
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-  confirm_password: { type: String, required: true }
+module.exports = __toCommonJS(UserRoutes_exports);
+var import_express = __toESM(require("express"));
+var router = import_express.default.Router();
+router.get("/register", (req, res) => {
+  res.send("Registering Users.........");
 });
-var User = (0, import_mongoose.model)("Users", userSchema);
-var UserModel_default = User;
+var UserRoutes_default = router;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {});
