@@ -1494,6 +1494,7 @@ var conn_default = connectDB;
 
 // src/app.ts
 var import_morgan = __toESM(require_morgan());
+var import_cors = __toESM(require("cors"));
 
 // src/routes/UserRoutes.ts
 var import_express = __toESM(require("express"));
@@ -1693,6 +1694,7 @@ var GoalRoutes_default = router2;
 // src/app.ts
 var port = process.env.PORT || 5e3;
 var app = (0, import_express3.default)();
+app.use((0, import_cors.default)());
 app.use(import_express3.default.json());
 app.use((0, import_morgan.default)("tiny"));
 import_dotenv4.default.config();

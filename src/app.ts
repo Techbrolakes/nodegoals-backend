@@ -3,12 +3,14 @@ import dotenv from "dotenv"
 import 'module-alias/register';
 import connectDB from "@config/conn";
 import morgan from "morgan";
+import cors from "cors"
 import userRoutes from "@routes/UserRoutes";
 import GoalRoutes from "@routes/GoalRoutes"
 const port = process.env.PORT || 5000
 
 const app = express();
 
+app.use(cors())
 app.use(express.json())
 app.use(morgan('tiny'))
 dotenv.config();
