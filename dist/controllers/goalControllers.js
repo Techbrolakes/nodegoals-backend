@@ -43,29 +43,55 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// src/middleware/authMiddleware.ts
-var authMiddleware_exports = {};
-__export(authMiddleware_exports, {
-  default: () => authMiddleware_default
+// src/controllers/goalControllers.ts
+var goalControllers_exports = {};
+__export(goalControllers_exports, {
+  createGoal: () => createGoal,
+  getGoal: () => getGoal
 });
-module.exports = __toCommonJS(authMiddleware_exports);
-var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
-var import_dotenv = __toESM(require("dotenv"));
-import_dotenv.default.config();
-var authMiddleware = (req, res, next) => __async(void 0, null, function* () {
-  const token = req.body.token || req.query.token || req.headers["x-auth-token"];
-  if (!token) {
-    return res.status(403).json({ message: "No token, authorization denied" });
+module.exports = __toCommonJS(goalControllers_exports);
+
+// src/models/GoalModel.ts
+var import_mongoose = __toESM(require("mongoose"));
+var goalSchema = new import_mongoose.Schema({
+  user: {
+    type: import_mongoose.default.Schema.Types.ObjectId,
+    required: true,
+    ref: "User"
+  },
+  text: {
+    type: String,
+    required: [true, "Please add a text value"]
   }
-  try {
-    const decoded = import_jsonwebtoken.default.verify(token, process.env.JWT_SECRET || "jwt");
-    req.token = decoded;
-    req.user = decoded;
-  } catch (error) {
-    res.status(401).json({ message: "Token is not valid" });
-  }
-  next();
+}, {
+  timestamps: true
 });
-var authMiddleware_default = authMiddleware;
+var Goal = (0, import_mongoose.model)("Goals", goalSchema);
+var GoalModel_default = Goal;
+
+// src/controllers/goalControllers.ts
+var import_lodash = require("lodash");
+var createGoal = (req, res) => __async(void 0, null, function* () {
+  const userId = req.user.id;
+  if (!req.body.text) {
+    return res.status(400).json({ message: "Please Kindly Enter Goal" });
+  }
+  const goal = yield GoalModel_default.create({
+    text: req.body.text,
+    user: userId
+  });
+  res.status(201).json(goal);
+});
+var getGoal = (req, res) => __async(void 0, null, function* () {
+  const userId = req.user.id;
+  const goals = yield GoalModel_default.find({ user: userId });
+  if ((0, import_lodash.isEmpty)(goals)) {
+    return res.status(200).json({ success: true, message: "No Goals Yet" });
+  }
+  res.status(200).json(goals);
+});
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {});
+0 && (module.exports = {
+  createGoal,
+  getGoal
+});

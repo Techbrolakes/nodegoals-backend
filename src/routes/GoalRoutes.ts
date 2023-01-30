@@ -1,11 +1,12 @@
 import express from "express";
-import { loginUser, registerUser } from "@controllers/userController";
+import { createGoal, getGoal } from "@controllers/goalControllers";
+import authMiddleware from "@middleware/authMiddleware";
 
 
 const router = express.Router();
 
-router.post("/register", registerUser );
-router.post("/login", loginUser);
+router.post("/create",authMiddleware , createGoal );
+router.get("/allgoals", authMiddleware, getGoal);
 
 
 export default router;

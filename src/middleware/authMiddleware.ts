@@ -6,7 +6,10 @@ dotenv.config()
 
 
 export interface CustomRequest extends Request {
- token: string | JwtPayload;
+    token: string | JwtPayload;
+    user: {
+        id: string
+    }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -20,7 +23,8 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
     // verify token
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jwt');
-        (req as CustomRequest).token = decoded
+        (req as CustomRequest).token = decoded;
+        (req as CustomRequest).user = decoded as {id: string}
     } catch (error) {
       res.status(401).json({ message: "Token is not valid" });   
     }
