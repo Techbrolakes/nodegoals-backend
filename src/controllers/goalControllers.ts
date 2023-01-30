@@ -21,11 +21,16 @@ export const createGoal = async (req: Request, res: Response) => {
         user: userId,
     })
 
-    res.status(201).json(goal)
+    res.status(201).json({
+        success: true,
+        mesaage: "Goal Created successfully",
+        data: {
+            goal
+        }
+     })
 }
 
 // Get goals
-
 export const getGoal = async (req: Request, res: Response) => {
     const userId = (req as CustomRequest).user.id
 
@@ -38,4 +43,45 @@ export const getGoal = async (req: Request, res: Response) => {
      res.status(200).json(goals)
 }
 
+// Update goals
+export const updateGoal = async (req: Request, res: Response) => {
+    const userId = (req as CustomRequest).user.id
+
+    const goal = await Goal.findById(req.params.id)
+    if (!goal) return res.status(400).json({ success: false, message: 'Goal Not Found' });
+    
+    if (goal.user.toString() != userId) return res.status(400).json({ success: false, message: 'User Not Found' });
+    
+    const updatedGoal = await Goal.findByIdAndUpdate(req.params.id, req.body, {
+        new: true
+    })
+    res.status(200).json({
+        success: true,
+        mesaage: "Goal updated successfully",
+        data: {
+            updatedGoal
+        }
+     })
+
+
+}
+
+// delete goal
+export const deleteGoal = async (req: Request, res: Response) => {
+    const userId = (req as CustomRequest).user.id
+    
+    const goal = await Goal.findById(req.params.id)
+    if (!goal) return res.status(400).json({ success: false, message: 'Goal Not Found' });
+
+    if (goal.user.toString() != userId) return res.status(400).json({ success: false, message: 'User Not Found' });
+        const deletedGoal = await Goal.findByIdAndDelete(req.params.id, req.body)
+    res.status(200).json({
+        success: true,
+        mesaage: "Goal deleted successfully",
+        data: {
+            deletedGoal
+        }
+     })
+
+}
 

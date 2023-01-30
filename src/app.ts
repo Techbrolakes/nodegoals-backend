@@ -16,12 +16,10 @@ dotenv.config();
 
 app.use("/api/v1/user", userRoutes)
 app.use("/api/v1/goal", GoalRoutes)
- 
-
-app.get('/', (req, res) => {
-    res.send("Hello Node Js!");
+app.all("*", (req, res) => {
+    return res.status(404).json({message: "Route not found"})  
 })
-
+ 
 /** start server only when we have valid connection */
 connectDB().then(() => {
     try {

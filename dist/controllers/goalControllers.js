@@ -47,7 +47,9 @@ var __async = (__this, __arguments, generator) => {
 var goalControllers_exports = {};
 __export(goalControllers_exports, {
   createGoal: () => createGoal,
-  getGoal: () => getGoal
+  deleteGoal: () => deleteGoal,
+  getGoal: () => getGoal,
+  updateGoal: () => updateGoal
 });
 module.exports = __toCommonJS(goalControllers_exports);
 
@@ -80,7 +82,13 @@ var createGoal = (req, res) => __async(void 0, null, function* () {
     text: req.body.text,
     user: userId
   });
-  res.status(201).json(goal);
+  res.status(201).json({
+    success: true,
+    mesaage: "Goal Created successfully",
+    data: {
+      goal
+    }
+  });
 });
 var getGoal = (req, res) => __async(void 0, null, function* () {
   const userId = req.user.id;
@@ -90,8 +98,44 @@ var getGoal = (req, res) => __async(void 0, null, function* () {
   }
   res.status(200).json(goals);
 });
+var updateGoal = (req, res) => __async(void 0, null, function* () {
+  const userId = req.user.id;
+  const goal = yield GoalModel_default.findById(req.params.id);
+  if (!goal)
+    return res.status(400).json({ success: false, message: "Goal Not Found" });
+  if (goal.user.toString() != userId)
+    return res.status(400).json({ success: false, message: "User Not Found" });
+  const updatedGoal = yield GoalModel_default.findByIdAndUpdate(req.params.id, req.body, {
+    new: true
+  });
+  res.status(200).json({
+    success: true,
+    mesaage: "Goal updated successfully",
+    data: {
+      updatedGoal
+    }
+  });
+});
+var deleteGoal = (req, res) => __async(void 0, null, function* () {
+  const userId = req.user.id;
+  const goal = yield GoalModel_default.findById(req.params.id);
+  if (!goal)
+    return res.status(400).json({ success: false, message: "Goal Not Found" });
+  if (goal.user.toString() != userId)
+    return res.status(400).json({ success: false, message: "User Not Found" });
+  const deletedGoal = yield GoalModel_default.findByIdAndDelete(req.params.id, req.body);
+  res.status(200).json({
+    success: true,
+    mesaage: "Goal deleted successfully",
+    data: {
+      deletedGoal
+    }
+  });
+});
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   createGoal,
-  getGoal
+  deleteGoal,
+  getGoal,
+  updateGoal
 });

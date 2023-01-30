@@ -1611,7 +1611,13 @@ var createGoal = (req, res) => __async(void 0, null, function* () {
     text: req.body.text,
     user: userId
   });
-  res.status(201).json(goal);
+  res.status(201).json({
+    success: true,
+    mesaage: "Goal Created successfully",
+    data: {
+      goal
+    }
+  });
 });
 var getGoal = (req, res) => __async(void 0, null, function* () {
   const userId = req.user.id;
@@ -1620,6 +1626,40 @@ var getGoal = (req, res) => __async(void 0, null, function* () {
     return res.status(200).json({ success: true, message: "No Goals Yet" });
   }
   res.status(200).json(goals);
+});
+var updateGoal = (req, res) => __async(void 0, null, function* () {
+  const userId = req.user.id;
+  const goal = yield GoalModel_default.findById(req.params.id);
+  if (!goal)
+    return res.status(400).json({ success: false, message: "Goal Not Found" });
+  if (goal.user.toString() != userId)
+    return res.status(400).json({ success: false, message: "User Not Found" });
+  const updatedGoal = yield GoalModel_default.findByIdAndUpdate(req.params.id, req.body, {
+    new: true
+  });
+  res.status(200).json({
+    success: true,
+    mesaage: "Goal updated successfully",
+    data: {
+      updatedGoal
+    }
+  });
+});
+var deleteGoal = (req, res) => __async(void 0, null, function* () {
+  const userId = req.user.id;
+  const goal = yield GoalModel_default.findById(req.params.id);
+  if (!goal)
+    return res.status(400).json({ success: false, message: "Goal Not Found" });
+  if (goal.user.toString() != userId)
+    return res.status(400).json({ success: false, message: "User Not Found" });
+  const deletedGoal = yield GoalModel_default.findByIdAndDelete(req.params.id, req.body);
+  res.status(200).json({
+    success: true,
+    mesaage: "Goal deleted successfully",
+    data: {
+      deletedGoal
+    }
+  });
 });
 
 // src/middleware/authMiddleware.ts
@@ -1646,6 +1686,8 @@ var authMiddleware_default = authMiddleware;
 var router2 = import_express2.default.Router();
 router2.post("/create", authMiddleware_default, createGoal);
 router2.get("/allgoals", authMiddleware_default, getGoal);
+router2.put("/edit/:id", authMiddleware_default, updateGoal);
+router2.delete("/delete/:id", authMiddleware_default, deleteGoal);
 var GoalRoutes_default = router2;
 
 // src/app.ts
@@ -1656,8 +1698,8 @@ app.use((0, import_morgan.default)("tiny"));
 import_dotenv4.default.config();
 app.use("/api/v1/user", UserRoutes_default);
 app.use("/api/v1/goal", GoalRoutes_default);
-app.get("/", (req, res) => {
-  res.send("Hello Node Js!");
+app.all("*", (req, res) => {
+  return res.status(404).json({ message: "Route not found" });
 });
 conn_default().then(() => {
   try {
