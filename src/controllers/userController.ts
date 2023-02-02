@@ -5,8 +5,18 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv"
 import OTP from "@models/OtpModel";
+import Mailgen from "mailgen";
 import { OTPGenerator, sendEmail } from "@utils/util";
 dotenv.config()
+
+
+const mailGenerator = new Mailgen({
+  theme: 'default',
+  product: {
+    name: 'Goals Base',
+    link: 'http://yourproductname.com/'
+  }
+});
 
 interface ISendMail {
   email: string,
@@ -97,6 +107,21 @@ export const verifyAccount = async (req: Request, res: Response) => {
 
 // FUNCTION THAT WILL GENERATE AND SEND THE OTP
 export const sendOTP = async ({ email, subject, message, duration = 1 }: ISendMail) => {
+      const generatedOtp = OTPGenerator
+
+  const emailBody = mailGenerator.generate({
+  body: {
+    intro: 'Welcome to your new Goals Base account',
+    action: {
+      instructions: `To get started with your account, please enter this otp ${generatedOtp}, it will expiry in ${duration} hours time`,
+      button: {
+        color: 'green',
+        text: 'Welcome to GoalBase',
+        link: 'http://yourproductname.com/confirm'
+      }
+    }
+  }
+});
   try {
     if (!email && !subject && !message) {
       throw Error("Provide Value Fields For Email, Subject, Message")
@@ -104,24 +129,13 @@ export const sendOTP = async ({ email, subject, message, duration = 1 }: ISendMa
     // clear any old record
     await OTP.deleteOne({ email})
     // Generated OTP
-    const generatedOtp = OTPGenerator
   
     // send mail
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email,
-      subject,
-      html: `
-      <div
-        class="container"
-        style="max-width: 90%; margin: auto; padding-top: 20px"
-      >
-        <h2>${message}</h2>
-        <h4>You are officially In ✔</h4>
-        <p style="margin-bottom: 30px;">Pleas enter the sign up OTP to get started</p>
-        <h1 style="font-size: 40px; letter-spacing: 2px; text-align:center;">${generatedOtp} it will expire in ${duration} hour.</h1>
-   </div>
-    `,
+      subject: 'Message From Goals Base',
+      html: emailBody,
     };
 
     await sendEmail(mailOptions)

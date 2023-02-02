@@ -1528,6 +1528,9 @@ var OTPSchema = new import_mongoose3.Schema({
 var OTP = (0, import_mongoose3.model)("OTP", OTPSchema);
 var OtpModel_default = OTP;
 
+// src/controllers/userController.ts
+var import_mailgen = __toESM(require("mailgen"));
+
 // src/utils/util.ts
 var import_otp_generator = __toESM(require("otp-generator"));
 var import_nodemailer = __toESM(require("nodemailer"));
@@ -1564,6 +1567,13 @@ var OTPGenerator = import_otp_generator.default.generate(4, { digits: true, spec
 
 // src/controllers/userController.ts
 import_dotenv3.default.config();
+var mailGenerator = new import_mailgen.default({
+  theme: "default",
+  product: {
+    name: "Goals Base",
+    link: "http://yourproductname.com/"
+  }
+});
 var registerUser = (req, res) => __async(void 0, null, function* () {
   const { first_name, last_name, email, password, confirm_password } = req.body;
   const userExists = yield UserModel_default.findOne({ email });
@@ -1631,27 +1641,30 @@ var verifyAccount = (req, res) => __async(void 0, null, function* () {
   }
 });
 var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message, duration = 1 }) {
+  const generatedOtp = OTPGenerator;
+  const emailBody = mailGenerator.generate({
+    body: {
+      intro: "Welcome to your new Goals Base account",
+      action: {
+        instructions: `To get started with your account, please enter this otp ${generatedOtp}, it will expiry in ${duration} hours time`,
+        button: {
+          color: "green",
+          text: "Welcome to GoalBase",
+          link: "http://yourproductname.com/confirm"
+        }
+      }
+    }
+  });
   try {
     if (!email && !subject && !message) {
       throw Error("Provide Value Fields For Email, Subject, Message");
     }
     yield OtpModel_default.deleteOne({ email });
-    const generatedOtp = OTPGenerator;
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email,
-      subject,
-      html: `
-      <div
-        class="container"
-        style="max-width: 90%; margin: auto; padding-top: 20px"
-      >
-        <h2>${message}</h2>
-        <h4>You are officially In \u2714</h4>
-        <p style="margin-bottom: 30px;">Pleas enter the sign up OTP to get started</p>
-        <h1 style="font-size: 40px; letter-spacing: 2px; text-align:center;">${generatedOtp} it will expire in ${duration} hour.</h1>
-   </div>
-    `
+      subject: "Message From Goals Base",
+      html: emailBody
     };
     yield sendEmail(mailOptions);
     const newOTP = yield new OtpModel_default({
