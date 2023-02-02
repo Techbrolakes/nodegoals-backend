@@ -4,26 +4,11 @@ import User from "@models/UserModel";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv"
+import { sendOTP } from "@services/auth";
 import OTP from "@models/OtpModel";
-import Mailgen from "mailgen";
-import { OTPGenerator, sendEmail } from "@utils/util";
 dotenv.config()
 
 
-const mailGenerator = new Mailgen({
-  theme: 'default',
-  product: {
-    name: 'Goals Base',
-    link: 'http://yourproductname.com/'
-  }
-});
-
-interface ISendMail {
-  email: string,
-  message: string,
-  subject: string,
-  duration: number
-}
 export const registerUser = async (req: Request, res: Response) => {
   const { first_name, last_name, email, password, confirm_password } = req.body;
 
@@ -88,8 +73,32 @@ export const loginUser = async (req: Request, res: Response) => {
 } 
 
 
-// VERIFY OTP CONTROLLER
-export const verifyAccount = async (req: Request, res: Response) => {
+// Verify OTP 
+export const VerifyOtp = async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+
+  try {
+    if (!email && !otp) { 
+      return res.status(400).json({ success: false, message: 'No Email and Otp' });
+    }
+
+    // ensure otp record exists
+    const matchedOTPRecord = await OTP.findOne({ email })
+    if (!matchedOTPRecord) {
+      throw Error('No otp record')
+    }
+
+    const validOTP = otp
+
+    return res.status(200).json({valid: validOTP})
+  } catch (error) {
+    throw(error)
+  }
+}
+
+
+// Send Email Controller
+export const SendEmail = async (req: Request, res: Response) => {
   try {
     const { email, subject, message, duration } = req.body;
 
@@ -100,53 +109,6 @@ export const verifyAccount = async (req: Request, res: Response) => {
       duration,
     })
     res.json(createdOTP)
-  } catch (error) {
-    console.log(error)
-  }
-}
-
-// FUNCTION THAT WILL GENERATE AND SEND THE OTP
-export const sendOTP = async ({ email, subject, message, duration = 1 }: ISendMail) => {
-      const generatedOtp = OTPGenerator
-
-  const emailBody = mailGenerator.generate({
-  body: {
-    intro: 'Welcome to your new Goals Base account',
-    action: {
-      instructions: `To get started with your account, please enter this otp ${generatedOtp}, it will expiry in ${duration} hours time`,
-      button: {
-        color: 'green',
-        text: 'Welcome to GoalBase',
-        link: 'http://yourproductname.com/confirm'
-      }
-    }
-  }
-});
-  try {
-    if (!email && !subject && !message) {
-      throw Error("Provide Value Fields For Email, Subject, Message")
-    }
-    // clear any old record
-    await OTP.deleteOne({ email})
-    // Generated OTP
-  
-    // send mail
-    const mailOptions = {
-      from: process.env.SMTP_USER,
-      to: email,
-      subject: 'Message From Goals Base',
-      html: emailBody,
-    };
-
-    await sendEmail(mailOptions)
-
-    const newOTP = await new OTP({
-      email,
-      otp: generatedOtp
-    })
-    
-    const createdOTPRecord = await newOTP.save()
-    return createdOTPRecord
   } catch (error) {
     console.log(error)
   }

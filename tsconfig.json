@@ -13,12 +13,13 @@
     "rootDir": "./src",                                  
     "baseUrl": "./src",                                  
     "paths": {
-      "@routes/*":["routes/*"],
-      "@models/*":["models/*"],
-      "@controllers/*":["controllers/*"],
-      "@utils/*":["utils/*"],
       "@config/*":["config/*"],
+      "@controllers/*":["controllers/*"],
       "@middleware/*":["middleware/*"],
+      "@models/*":["models/*"],
+      "@routes/*":["routes/*"],
+      "@services/*":["services/*"],
+      "@utils/*":["utils/*"],
     },                                      
   }
 }

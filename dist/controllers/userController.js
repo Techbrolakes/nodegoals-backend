@@ -46,10 +46,10 @@ var __async = (__this, __arguments, generator) => {
 // src/controllers/userController.ts
 var userController_exports = {};
 __export(userController_exports, {
+  SendEmail: () => SendEmail,
+  VerifyOtp: () => VerifyOtp,
   loginUser: () => loginUser,
-  registerUser: () => registerUser,
-  sendOTP: () => sendOTP,
-  verifyAccount: () => verifyAccount
+  registerUser: () => registerUser
 });
 module.exports = __toCommonJS(userController_exports);
 
@@ -82,7 +82,7 @@ var OTPSchema = new import_mongoose2.Schema({
 var OTP = (0, import_mongoose2.model)("OTP", OTPSchema);
 var OtpModel_default = OTP;
 
-// src/controllers/userController.ts
+// src/services/auth/index.ts
 var import_mailgen = __toESM(require("mailgen"));
 
 // src/utils/util.ts
@@ -119,8 +119,7 @@ var sendEmail = (mailOptions) => __async(void 0, null, function* () {
 });
 var OTPGenerator = import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
 
-// src/controllers/userController.ts
-import_dotenv2.default.config();
+// src/services/auth/index.ts
 var mailGenerator = new import_mailgen.default({
   theme: "default",
   product: {
@@ -128,6 +127,46 @@ var mailGenerator = new import_mailgen.default({
     link: "http://yourproductname.com/"
   }
 });
+var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message, duration = 1 }) {
+  const generatedOtp = OTPGenerator;
+  const emailBody = mailGenerator.generate({
+    body: {
+      intro: "Welcome to your new Goals Base account",
+      action: {
+        instructions: `To get started with your account, please enter this otp ${generatedOtp}, it will expiry in ${duration} hours time`,
+        button: {
+          color: "green",
+          text: "Welcome to GoalBase",
+          link: "http://yourproductname.com/confirm"
+        }
+      }
+    }
+  });
+  try {
+    if (!email && !subject && !message) {
+      throw Error("Provide Value Fields For Email, Subject, Message");
+    }
+    yield OtpModel_default.deleteOne({ email });
+    const mailOptions = {
+      from: process.env.SMTP_USER,
+      to: email,
+      subject: "Message From Goals Base",
+      html: emailBody
+    };
+    yield sendEmail(mailOptions);
+    const newOTP = yield new OtpModel_default({
+      email,
+      otp: generatedOtp
+    });
+    const createdOTPRecord = yield newOTP.save();
+    return createdOTPRecord;
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// src/controllers/userController.ts
+import_dotenv2.default.config();
 var registerUser = (req, res) => __async(void 0, null, function* () {
   const { first_name, last_name, email, password, confirm_password } = req.body;
   const userExists = yield UserModel_default.findOne({ email });
@@ -180,7 +219,23 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Invalid Password" });
   }
 });
-var verifyAccount = (req, res) => __async(void 0, null, function* () {
+var VerifyOtp = (req, res) => __async(void 0, null, function* () {
+  const { email, otp } = req.body;
+  try {
+    if (!email && !otp) {
+      return res.status(400).json({ success: false, message: "No Email and Otp" });
+    }
+    const matchedOTPRecord = yield OtpModel_default.findOne({ email });
+    if (!matchedOTPRecord) {
+      throw Error("No otp record");
+    }
+    const validOTP = otp;
+    return res.status(200).json({ valid: validOTP });
+  } catch (error) {
+    throw error;
+  }
+});
+var SendEmail = (req, res) => __async(void 0, null, function* () {
   try {
     const { email, subject, message, duration } = req.body;
     const createdOTP = yield sendOTP({
@@ -194,43 +249,6 @@ var verifyAccount = (req, res) => __async(void 0, null, function* () {
     console.log(error);
   }
 });
-var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message, duration = 1 }) {
-  const generatedOtp = OTPGenerator;
-  const emailBody = mailGenerator.generate({
-    body: {
-      intro: "Welcome to your new Goals Base account",
-      action: {
-        instructions: `To get started with your account, please enter this otp ${generatedOtp}, it will expiry in ${duration} hours time`,
-        button: {
-          color: "green",
-          text: "Welcome to GoalBase",
-          link: "http://yourproductname.com/confirm"
-        }
-      }
-    }
-  });
-  try {
-    if (!email && !subject && !message) {
-      throw Error("Provide Value Fields For Email, Subject, Message");
-    }
-    yield OtpModel_default.deleteOne({ email });
-    const mailOptions = {
-      from: process.env.SMTP_USER,
-      to: email,
-      subject: "Message From Goals Base",
-      html: emailBody
-    };
-    yield sendEmail(mailOptions);
-    const newOTP = yield new OtpModel_default({
-      email,
-      otp: generatedOtp
-    });
-    const createdOTPRecord = yield newOTP.save();
-    return createdOTPRecord;
-  } catch (error) {
-    console.log(error);
-  }
-});
 var generateToken = (id) => {
   return import_jsonwebtoken.default.sign({ id }, process.env.JWT_SECRET || "jwt", {
     expiresIn: "30d"
@@ -238,8 +256,8 @@ var generateToken = (id) => {
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  SendEmail,
+  VerifyOtp,
   loginUser,
-  registerUser,
-  sendOTP,
-  verifyAccount
+  registerUser
 });

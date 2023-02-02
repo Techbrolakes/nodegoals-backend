@@ -80,7 +80,7 @@ var OTPSchema = new import_mongoose2.Schema({
 var OTP = (0, import_mongoose2.model)("OTP", OTPSchema);
 var OtpModel_default = OTP;
 
-// src/controllers/userController.ts
+// src/services/auth/index.ts
 var import_mailgen = __toESM(require("mailgen"));
 
 // src/utils/util.ts
@@ -107,18 +107,9 @@ transporter.verify((error) => {
     console.log("Server is ready to take our messages");
   }
 });
-var sendEmail = (mailOptions) => __async(void 0, null, function* () {
-  try {
-    yield transporter.sendMail(mailOptions);
-    return;
-  } catch (error) {
-    console.log(error);
-  }
-});
 var OTPGenerator = import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
 
-// src/controllers/userController.ts
-import_dotenv2.default.config();
+// src/services/auth/index.ts
 var mailGenerator = new import_mailgen.default({
   theme: "default",
   product: {
@@ -126,6 +117,9 @@ var mailGenerator = new import_mailgen.default({
     link: "http://yourproductname.com/"
   }
 });
+
+// src/controllers/userController.ts
+import_dotenv2.default.config();
 var registerUser = (req, res) => __async(void 0, null, function* () {
   const { first_name, last_name, email, password, confirm_password } = req.body;
   const userExists = yield UserModel_default.findOne({ email });
@@ -178,55 +172,20 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Invalid Password" });
   }
 });
-var verifyAccount = (req, res) => __async(void 0, null, function* () {
+var VerifyOtp = (req, res) => __async(void 0, null, function* () {
+  const { email, otp } = req.body;
   try {
-    const { email, subject, message, duration } = req.body;
-    const createdOTP = yield sendOTP({
-      email,
-      subject,
-      message,
-      duration
-    });
-    res.json(createdOTP);
-  } catch (error) {
-    console.log(error);
-  }
-});
-var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message, duration = 1 }) {
-  const generatedOtp = OTPGenerator;
-  const emailBody = mailGenerator.generate({
-    body: {
-      intro: "Welcome to your new Goals Base account",
-      action: {
-        instructions: `To get started with your account, please enter this otp ${generatedOtp}, it will expiry in ${duration} hours time`,
-        button: {
-          color: "green",
-          text: "Welcome to GoalBase",
-          link: "http://yourproductname.com/confirm"
-        }
-      }
+    if (!email && !otp) {
+      return res.status(400).json({ success: false, message: "No Email and Otp" });
     }
-  });
-  try {
-    if (!email && !subject && !message) {
-      throw Error("Provide Value Fields For Email, Subject, Message");
+    const matchedOTPRecord = yield OtpModel_default.findOne({ email });
+    if (!matchedOTPRecord) {
+      throw Error("No otp record");
     }
-    yield OtpModel_default.deleteOne({ email });
-    const mailOptions = {
-      from: process.env.SMTP_USER,
-      to: email,
-      subject: "Message From Goals Base",
-      html: emailBody
-    };
-    yield sendEmail(mailOptions);
-    const newOTP = yield new OtpModel_default({
-      email,
-      otp: generatedOtp
-    });
-    const createdOTPRecord = yield newOTP.save();
-    return createdOTPRecord;
+    const validOTP = otp;
+    return res.status(200).json({ valid: validOTP });
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 });
 var generateToken = (id) => {
@@ -239,7 +198,7 @@ var generateToken = (id) => {
 var router = import_express.default.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.post("/verify", verifyAccount);
+router.post("/verify", VerifyOtp);
 var UserRoutes_default = router;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {});
