@@ -20,7 +20,6 @@ interface ISendMail {
 }
 
 
-
 // FUNCTION THAT WILL GENERATE AND SEND THE OTP
 export const sendOTP = async ({ email, subject, message, duration = 1 }: ISendMail) => {
       const generatedOtp = OTPGenerator

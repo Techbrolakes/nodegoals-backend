@@ -72,6 +72,28 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 } 
 
+// Verify Email
+export const SendVerificationOTPEmail = async (req: Request, res: Response) => {
+  const {email} = req.body
+  try {
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      throw Error("Email does not exist")
+    }
+
+    const otpDetails = {
+      email,
+      subject: "Email Verification",
+      message: "Verify your email with the code below",
+      duration: 1
+    }
+    const createdOTP = await sendOTP(otpDetails)
+     return res.status(200).json(createdOTP)
+  } catch (error: any) {
+    return res.status(400).send(error.message)
+  }
+}
+
 
 // Verify OTP 
 export const VerifyOtp = async (req: Request, res: Response) => {

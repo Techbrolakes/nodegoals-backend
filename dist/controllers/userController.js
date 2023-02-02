@@ -47,6 +47,7 @@ var __async = (__this, __arguments, generator) => {
 var userController_exports = {};
 __export(userController_exports, {
   SendEmail: () => SendEmail,
+  SendVerificationOTPEmail: () => SendVerificationOTPEmail,
   VerifyOtp: () => VerifyOtp,
   loginUser: () => loginUser,
   registerUser: () => registerUser
@@ -219,6 +220,25 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Invalid Password" });
   }
 });
+var SendVerificationOTPEmail = (req, res) => __async(void 0, null, function* () {
+  const { email } = req.body;
+  try {
+    const existingUser = yield UserModel_default.findOne({ email });
+    if (!existingUser) {
+      throw Error("Email does not exist");
+    }
+    const otpDetails = {
+      email,
+      subject: "Email Verification",
+      message: "Verify your email with the code below",
+      duration: 1
+    };
+    const createdOTP = yield sendOTP(otpDetails);
+    return res.status(200).json(createdOTP);
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
+});
 var VerifyOtp = (req, res) => __async(void 0, null, function* () {
   const { email, otp } = req.body;
   try {
@@ -257,6 +277,7 @@ var generateToken = (id) => {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   SendEmail,
+  SendVerificationOTPEmail,
   VerifyOtp,
   loginUser,
   registerUser

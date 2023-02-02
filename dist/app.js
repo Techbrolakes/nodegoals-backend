@@ -1555,6 +1555,14 @@ transporter.verify((error) => {
     console.log("Server is ready to take our messages");
   }
 });
+var sendEmail = (mailOptions) => __async(void 0, null, function* () {
+  try {
+    yield transporter.sendMail(mailOptions);
+    return;
+  } catch (error) {
+    console.log(error);
+  }
+});
 var OTPGenerator = import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
 
 // src/services/auth/index.ts
@@ -1563,6 +1571,43 @@ var mailGenerator = new import_mailgen.default({
   product: {
     name: "Goals Base",
     link: "http://yourproductname.com/"
+  }
+});
+var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message, duration = 1 }) {
+  const generatedOtp = OTPGenerator;
+  const emailBody = mailGenerator.generate({
+    body: {
+      intro: "Welcome to your new Goals Base account",
+      action: {
+        instructions: `To get started with your account, please enter this otp ${generatedOtp}, it will expiry in ${duration} hours time`,
+        button: {
+          color: "green",
+          text: "Welcome to GoalBase",
+          link: "http://yourproductname.com/confirm"
+        }
+      }
+    }
+  });
+  try {
+    if (!email && !subject && !message) {
+      throw Error("Provide Value Fields For Email, Subject, Message");
+    }
+    yield OtpModel_default.deleteOne({ email });
+    const mailOptions = {
+      from: process.env.SMTP_USER,
+      to: email,
+      subject: "Message From Goals Base",
+      html: emailBody
+    };
+    yield sendEmail(mailOptions);
+    const newOTP = yield new OtpModel_default({
+      email,
+      otp: generatedOtp
+    });
+    const createdOTPRecord = yield newOTP.save();
+    return createdOTPRecord;
+  } catch (error) {
+    console.log(error);
   }
 });
 
@@ -1620,6 +1665,25 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Invalid Password" });
   }
 });
+var SendVerificationOTPEmail = (req, res) => __async(void 0, null, function* () {
+  const { email } = req.body;
+  try {
+    const existingUser = yield UserModel_default.findOne({ email });
+    if (!existingUser) {
+      throw Error("Email does not exist");
+    }
+    const otpDetails = {
+      email,
+      subject: "Email Verification",
+      message: "Verify your email with the code below",
+      duration: 1
+    };
+    const createdOTP = yield sendOTP(otpDetails);
+    return res.status(200).json(createdOTP);
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
+});
 var VerifyOtp = (req, res) => __async(void 0, null, function* () {
   const { email, otp } = req.body;
   try {
@@ -1646,6 +1710,7 @@ var generateToken = (id) => {
 var router = import_express.default.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/verifymail", SendVerificationOTPEmail);
 router.post("/verify", VerifyOtp);
 var UserRoutes_default = router;
 
