@@ -1526,6 +1526,7 @@ var OTPSchema = new import_mongoose3.Schema({
   otp: String
 });
 var OTP = (0, import_mongoose3.model)("OTP", OTPSchema);
+var OtpModel_default = OTP;
 
 // src/utils/util.ts
 var import_otp_generator = __toESM(require("otp-generator"));
@@ -1551,6 +1552,15 @@ transporter.verify((error) => {
     console.log("Server is ready to take our messages");
   }
 });
+var sendEmail = (mailOptions) => __async(void 0, null, function* () {
+  try {
+    yield transporter.sendMail(mailOptions);
+    return;
+  } catch (error) {
+    console.log(error);
+  }
+});
+var OTPGenerator = import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
 
 // src/controllers/userController.ts
 import_dotenv3.default.config();
@@ -1606,6 +1616,54 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Invalid Password" });
   }
 });
+var verifyAccount = (req, res) => __async(void 0, null, function* () {
+  try {
+    const { email, subject, message, duration } = req.body;
+    const createdOTP = yield sendOTP({
+      email,
+      subject,
+      message,
+      duration
+    });
+    res.json(createdOTP);
+  } catch (error) {
+    console.log(error);
+  }
+});
+var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message, duration = 1 }) {
+  try {
+    if (!email && !subject && !message) {
+      throw Error("Provide Value Fields For Email, Subject, Message");
+    }
+    yield OtpModel_default.deleteOne({ email });
+    const generatedOtp = OTPGenerator;
+    const mailOptions = {
+      from: process.env.SMTP_USER,
+      to: email,
+      subject,
+      html: `
+      <div
+        class="container"
+        style="max-width: 90%; margin: auto; padding-top: 20px"
+      >
+        <h2>${message}</h2>
+        <h4>You are officially In \u2714</h4>
+        <p style="margin-bottom: 30px;">Pleas enter the sign up OTP to get started</p>
+        <h1 style="font-size: 40px; letter-spacing: 2px; text-align:center;">${generatedOtp} it will expire in ${duration} hour.</h1>
+   </div>
+    `
+    };
+    yield sendEmail(mailOptions);
+    const newOTP = yield new OtpModel_default({
+      email,
+      otp: generatedOtp
+    });
+    const createdOTPRecord = yield newOTP.save();
+    return createdOTPRecord;
+  } catch (error) {
+    console.log(error);
+  }
+});
 var generateToken = (id) => {
   return import_jsonwebtoken.default.sign({ id }, process.env.JWT_SECRET || "jwt", {
     expiresIn: "30d"
@@ -1616,6 +1674,7 @@ var generateToken = (id) => {
 var router = import_express.default.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/verify", verifyAccount);
 var UserRoutes_default = router;
 
 // src/routes/GoalRoutes.ts

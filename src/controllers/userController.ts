@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv"
 import OTP from "@models/OtpModel";
-import { generateOtp, sendEmail } from "@utils/util";
+import { OTPGenerator, sendEmail } from "@utils/util";
 dotenv.config()
 
 interface ISendMail {
@@ -89,7 +89,7 @@ export const verifyAccount = async (req: Request, res: Response) => {
       message,
       duration,
     })
-    res.send(200).json(createdOTP)
+    res.json(createdOTP)
   } catch (error) {
     console.log(error)
   }
@@ -104,10 +104,11 @@ export const sendOTP = async ({ email, subject, message, duration = 1 }: ISendMa
     // clear any old record
     await OTP.deleteOne({ email})
     // Generated OTP
-    const generatedOtp = await generateOtp()
+    const generatedOtp = OTPGenerator
+  
     // send mail
     const mailOptions = {
-      from: "lekandar@hotmail.com",
+      from: process.env.SMTP_USER,
       to: email,
       subject,
       html: `

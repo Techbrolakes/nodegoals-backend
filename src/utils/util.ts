@@ -39,8 +39,6 @@ export const sendEmail = async (mailOptions: any) => {
 
 
 // Generate OTP
-export const generateOtp = async () => {
-    const OTP = await otpGenerator.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false })
-    console.log(OTP)
-}
+export const OTPGenerator = otpGenerator.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false })
+
 

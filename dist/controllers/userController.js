@@ -114,10 +114,7 @@ var sendEmail = (mailOptions) => __async(void 0, null, function* () {
     console.log(error);
   }
 });
-var generateOtp = () => __async(void 0, null, function* () {
-  const OTP2 = yield import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
-  console.log(OTP2);
-});
+var OTPGenerator = import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
 
 // src/controllers/userController.ts
 import_dotenv2.default.config();
@@ -182,7 +179,7 @@ var verifyAccount = (req, res) => __async(void 0, null, function* () {
       message,
       duration
     });
-    res.send(200).json(createdOTP);
+    res.json(createdOTP);
   } catch (error) {
     console.log(error);
   }
@@ -193,9 +190,9 @@ var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message
       throw Error("Provide Value Fields For Email, Subject, Message");
     }
     yield OtpModel_default.deleteOne({ email });
-    const generatedOtp = yield generateOtp();
+    const generatedOtp = OTPGenerator;
     const mailOptions = {
-      from: "lekandar@hotmail.com",
+      from: process.env.SMTP_USER,
       to: email,
       subject,
       html: `

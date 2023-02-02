@@ -46,7 +46,7 @@ var __async = (__this, __arguments, generator) => {
 // src/utils/util.ts
 var util_exports = {};
 __export(util_exports, {
-  generateOtp: () => generateOtp,
+  OTPGenerator: () => OTPGenerator,
   sendEmail: () => sendEmail
 });
 module.exports = __toCommonJS(util_exports);
@@ -81,12 +81,9 @@ var sendEmail = (mailOptions) => __async(void 0, null, function* () {
     console.log(error);
   }
 });
-var generateOtp = () => __async(void 0, null, function* () {
-  const OTP = yield import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
-  console.log(OTP);
-});
+var OTPGenerator = import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  generateOtp,
+  OTPGenerator,
   sendEmail
 });
