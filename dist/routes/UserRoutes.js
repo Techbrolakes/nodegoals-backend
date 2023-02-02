@@ -66,8 +66,46 @@ var UserModel_default = User;
 // src/controllers/userController.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 var import_bcrypt = __toESM(require("bcrypt"));
+var import_dotenv2 = __toESM(require("dotenv"));
+
+// src/models/OtpModel.ts
+var import_mongoose2 = require("mongoose");
+var OTPSchema = new import_mongoose2.Schema({
+  email: {
+    type: String,
+    required: true
+  },
+  otp: String
+});
+var OTP = (0, import_mongoose2.model)("OTP", OTPSchema);
+
+// src/utils/util.ts
+var import_otp_generator = __toESM(require("otp-generator"));
+var import_nodemailer = __toESM(require("nodemailer"));
 var import_dotenv = __toESM(require("dotenv"));
 import_dotenv.default.config();
+var transporter = import_nodemailer.default.createTransport({
+  host: process.env.SMTP_HOST,
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+transporter.verify((error) => {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log("Server is ready to take our messages");
+  }
+});
+
+// src/controllers/userController.ts
+import_dotenv2.default.config();
 var registerUser = (req, res) => __async(void 0, null, function* () {
   const { first_name, last_name, email, password, confirm_password } = req.body;
   const userExists = yield UserModel_default.findOne({ email });

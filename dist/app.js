@@ -1476,7 +1476,7 @@ var require_morgan = __commonJS({
 
 // src/app.ts
 var import_express3 = __toESM(require("express"));
-var import_dotenv4 = __toESM(require("dotenv"));
+var import_dotenv5 = __toESM(require("dotenv"));
 
 // node_modules/module-alias/register.js
 require_module_alias()();
@@ -1514,8 +1514,46 @@ var UserModel_default = User;
 // src/controllers/userController.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 var import_bcrypt = __toESM(require("bcrypt"));
+var import_dotenv3 = __toESM(require("dotenv"));
+
+// src/models/OtpModel.ts
+var import_mongoose3 = require("mongoose");
+var OTPSchema = new import_mongoose3.Schema({
+  email: {
+    type: String,
+    required: true
+  },
+  otp: String
+});
+var OTP = (0, import_mongoose3.model)("OTP", OTPSchema);
+
+// src/utils/util.ts
+var import_otp_generator = __toESM(require("otp-generator"));
+var import_nodemailer = __toESM(require("nodemailer"));
 var import_dotenv2 = __toESM(require("dotenv"));
 import_dotenv2.default.config();
+var transporter = import_nodemailer.default.createTransport({
+  host: process.env.SMTP_HOST,
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+transporter.verify((error) => {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log("Server is ready to take our messages");
+  }
+});
+
+// src/controllers/userController.ts
+import_dotenv3.default.config();
 var registerUser = (req, res) => __async(void 0, null, function* () {
   const { first_name, last_name, email, password, confirm_password } = req.body;
   const userExists = yield UserModel_default.findOne({ email });
@@ -1584,10 +1622,10 @@ var UserRoutes_default = router;
 var import_express2 = __toESM(require("express"));
 
 // src/models/GoalModel.ts
-var import_mongoose3 = __toESM(require("mongoose"));
-var goalSchema = new import_mongoose3.Schema({
+var import_mongoose4 = __toESM(require("mongoose"));
+var goalSchema = new import_mongoose4.Schema({
   user: {
-    type: import_mongoose3.default.Schema.Types.ObjectId,
+    type: import_mongoose4.default.Schema.Types.ObjectId,
     required: true,
     ref: "User"
   },
@@ -1598,7 +1636,7 @@ var goalSchema = new import_mongoose3.Schema({
 }, {
   timestamps: true
 });
-var Goal = (0, import_mongoose3.model)("Goals", goalSchema);
+var Goal = (0, import_mongoose4.model)("Goals", goalSchema);
 var GoalModel_default = Goal;
 
 // src/controllers/goalControllers.ts
@@ -1665,8 +1703,8 @@ var deleteGoal = (req, res) => __async(void 0, null, function* () {
 
 // src/middleware/authMiddleware.ts
 var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
-var import_dotenv3 = __toESM(require("dotenv"));
-import_dotenv3.default.config();
+var import_dotenv4 = __toESM(require("dotenv"));
+import_dotenv4.default.config();
 var authMiddleware = (req, res, next) => __async(void 0, null, function* () {
   const token = req.body.token || req.query.token || req.headers["x-auth-token"];
   if (!token) {
@@ -1697,7 +1735,7 @@ var app = (0, import_express3.default)();
 app.use((0, import_cors.default)());
 app.use(import_express3.default.json());
 app.use((0, import_morgan.default)("tiny"));
-import_dotenv4.default.config();
+import_dotenv5.default.config();
 app.use("/api/v1/user", UserRoutes_default);
 app.use("/api/v1/goal", GoalRoutes_default);
 app.all("*", (req, res) => {

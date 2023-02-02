@@ -47,7 +47,9 @@ var __async = (__this, __arguments, generator) => {
 var userController_exports = {};
 __export(userController_exports, {
   loginUser: () => loginUser,
-  registerUser: () => registerUser
+  registerUser: () => registerUser,
+  sendOTP: () => sendOTP,
+  verifyAccount: () => verifyAccount
 });
 module.exports = __toCommonJS(userController_exports);
 
@@ -66,8 +68,59 @@ var UserModel_default = User;
 // src/controllers/userController.ts
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 var import_bcrypt = __toESM(require("bcrypt"));
+var import_dotenv2 = __toESM(require("dotenv"));
+
+// src/models/OtpModel.ts
+var import_mongoose2 = require("mongoose");
+var OTPSchema = new import_mongoose2.Schema({
+  email: {
+    type: String,
+    required: true
+  },
+  otp: String
+});
+var OTP = (0, import_mongoose2.model)("OTP", OTPSchema);
+var OtpModel_default = OTP;
+
+// src/utils/util.ts
+var import_otp_generator = __toESM(require("otp-generator"));
+var import_nodemailer = __toESM(require("nodemailer"));
 var import_dotenv = __toESM(require("dotenv"));
 import_dotenv.default.config();
+var transporter = import_nodemailer.default.createTransport({
+  host: process.env.SMTP_HOST,
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+transporter.verify((error) => {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log("Server is ready to take our messages");
+  }
+});
+var sendEmail = (mailOptions) => __async(void 0, null, function* () {
+  try {
+    yield transporter.sendMail(mailOptions);
+    return;
+  } catch (error) {
+    console.log(error);
+  }
+});
+var generateOtp = () => __async(void 0, null, function* () {
+  const OTP2 = yield import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
+  console.log(OTP2);
+});
+
+// src/controllers/userController.ts
+import_dotenv2.default.config();
 var registerUser = (req, res) => __async(void 0, null, function* () {
   const { first_name, last_name, email, password, confirm_password } = req.body;
   const userExists = yield UserModel_default.findOne({ email });
@@ -120,6 +173,54 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Invalid Password" });
   }
 });
+var verifyAccount = (req, res) => __async(void 0, null, function* () {
+  try {
+    const { email, subject, message, duration } = req.body;
+    const createdOTP = yield sendOTP({
+      email,
+      subject,
+      message,
+      duration
+    });
+    res.send(200).json(createdOTP);
+  } catch (error) {
+    console.log(error);
+  }
+});
+var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message, duration = 1 }) {
+  try {
+    if (!email && !subject && !message) {
+      throw Error("Provide Value Fields For Email, Subject, Message");
+    }
+    yield OtpModel_default.deleteOne({ email });
+    const generatedOtp = yield generateOtp();
+    const mailOptions = {
+      from: "lekandar@hotmail.com",
+      to: email,
+      subject,
+      html: `
+      <div
+        class="container"
+        style="max-width: 90%; margin: auto; padding-top: 20px"
+      >
+        <h2>${message}</h2>
+        <h4>You are officially In \u2714</h4>
+        <p style="margin-bottom: 30px;">Pleas enter the sign up OTP to get started</p>
+        <h1 style="font-size: 40px; letter-spacing: 2px; text-align:center;">${generatedOtp} it will expire in ${duration} hour.</h1>
+   </div>
+    `
+    };
+    yield sendEmail(mailOptions);
+    const newOTP = yield new OtpModel_default({
+      email,
+      otp: generatedOtp
+    });
+    const createdOTPRecord = yield newOTP.save();
+    return createdOTPRecord;
+  } catch (error) {
+    console.log(error);
+  }
+});
 var generateToken = (id) => {
   return import_jsonwebtoken.default.sign({ id }, process.env.JWT_SECRET || "jwt", {
     expiresIn: "30d"
@@ -128,5 +229,7 @@ var generateToken = (id) => {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   loginUser,
-  registerUser
+  registerUser,
+  sendOTP,
+  verifyAccount
 });

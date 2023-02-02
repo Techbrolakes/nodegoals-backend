@@ -1,5 +1,4 @@
 import Goal from "@models/GoalModel";
-import User from "@models/UserModel";
 import { Request, Response } from "express";
 import { isEmpty } from "lodash";
 export interface CustomRequest extends Request {

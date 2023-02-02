@@ -4,11 +4,18 @@ import User from "@models/UserModel";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv"
+import OTP from "@models/OtpModel";
+import { generateOtp, sendEmail } from "@utils/util";
 dotenv.config()
 
+interface ISendMail {
+  email: string,
+  message: string,
+  subject: string,
+  duration: number
+}
 export const registerUser = async (req: Request, res: Response) => {
   const { first_name, last_name, email, password, confirm_password } = req.body;
-
 
 // Check if the user exists
   const userExists = await User.findOne({ email })
@@ -70,6 +77,65 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 } 
 
+
+// VERIFY OTP CONTROLLER
+export const verifyAccount = async (req: Request, res: Response) => {
+  try {
+    const { email, subject, message, duration } = req.body;
+
+    const createdOTP = await sendOTP({
+      email,
+      subject,
+      message,
+      duration,
+    })
+    res.send(200).json(createdOTP)
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+// FUNCTION THAT WILL GENERATE AND SEND THE OTP
+export const sendOTP = async ({ email, subject, message, duration = 1 }: ISendMail) => {
+  try {
+    if (!email && !subject && !message) {
+      throw Error("Provide Value Fields For Email, Subject, Message")
+    }
+    // clear any old record
+    await OTP.deleteOne({ email})
+    // Generated OTP
+    const generatedOtp = await generateOtp()
+    // send mail
+    const mailOptions = {
+      from: "lekandar@hotmail.com",
+      to: email,
+      subject,
+      html: `
+      <div
+        class="container"
+        style="max-width: 90%; margin: auto; padding-top: 20px"
+      >
+        <h2>${message}</h2>
+        <h4>You are officially In ✔</h4>
+        <p style="margin-bottom: 30px;">Pleas enter the sign up OTP to get started</p>
+        <h1 style="font-size: 40px; letter-spacing: 2px; text-align:center;">${generatedOtp} it will expire in ${duration} hour.</h1>
+   </div>
+    `,
+    };
+
+    await sendEmail(mailOptions)
+
+    const newOTP = await new OTP({
+      email,
+      otp: generatedOtp
+    })
+    
+    const createdOTPRecord = await newOTP.save()
+    return createdOTPRecord
+  } catch (error) {
+    console.log(error)
+  }
+}
 
   // Generate Jwt token
   const generateToken = (id: any) => {
