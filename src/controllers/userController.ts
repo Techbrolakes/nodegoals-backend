@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import User from "@models/UserModel";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv"
-import { sendOTP } from "@services/auth";
 import OTP from "@models/OtpModel";
+import { generateToken } from "@utils/util";
+import { sendOTP } from "@services/mailgen";
 dotenv.config()
 
 
@@ -136,9 +136,3 @@ export const SendEmail = async (req: Request, res: Response) => {
   }
 }
 
-  // Generate Jwt token
-  const generateToken = (id: any) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET || 'jwt', {
-      expiresIn: '30d'
-    })
-  }

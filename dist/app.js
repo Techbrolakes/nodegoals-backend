@@ -1320,7 +1320,7 @@ var require_morgan = __commonJS({
           debug("log request");
           stream.write(line + "\n");
         }
-        ;
+        
         if (immediate) {
           logRequest();
         } else {

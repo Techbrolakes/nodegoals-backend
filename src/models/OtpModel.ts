@@ -5,7 +5,9 @@ const OTPSchema = new Schema({
         type: String,
         required: true
     },
-    otp: String
+    otp: String,
+    createdAt: Date,
+    expiresAt: Date
 })
 
 
