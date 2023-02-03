@@ -46,6 +46,7 @@ var __async = (__this, __arguments, generator) => {
 // src/controllers/userController.ts
 var userController_exports = {};
 __export(userController_exports, {
+  DeleteOtp: () => DeleteOtp,
   SendEmail: () => SendEmail,
   SendVerificationOTPEmail: () => SendVerificationOTPEmail,
   VerifyOtp: () => VerifyOtp,
@@ -67,7 +68,6 @@ var User = (0, import_mongoose.model)("Users", userSchema);
 var UserModel_default = User;
 
 // src/controllers/userController.ts
-var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_dotenv2 = __toESM(require("dotenv"));
 
@@ -78,16 +78,32 @@ var OTPSchema = new import_mongoose2.Schema({
     type: String,
     required: true
   },
-  otp: String
+  otp: String,
+  createdAt: Date,
+  expiresAt: Date
 });
 var OTP = (0, import_mongoose2.model)("OTP", OTPSchema);
 var OtpModel_default = OTP;
 
-// src/services/auth/index.ts
-var import_mailgen = __toESM(require("mailgen"));
-
 // src/utils/util.ts
 var import_otp_generator = __toESM(require("otp-generator"));
+var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
+var OTPGenerator = import_otp_generator.default.generate(4, {
+  digits: true,
+  specialChars: false,
+  lowerCaseAlphabets: false,
+  upperCaseAlphabets: false
+});
+var generateToken = (id) => {
+  return import_jsonwebtoken.default.sign({ id }, process.env.JWT_SECRET || "jwt", {
+    expiresIn: "30d"
+  });
+};
+
+// src/services/mailgen/index.ts
+var import_mailgen = __toESM(require("mailgen"));
+
+// src/services/nodemailer/index.ts
 var import_nodemailer = __toESM(require("nodemailer"));
 var import_dotenv = __toESM(require("dotenv"));
 import_dotenv.default.config();
@@ -118,46 +134,47 @@ var sendEmail = (mailOptions) => __async(void 0, null, function* () {
     console.log(error);
   }
 });
-var OTPGenerator = import_otp_generator.default.generate(4, { digits: true, specialChars: false, lowerCaseAlphabets: false, upperCaseAlphabets: false });
 
-// src/services/auth/index.ts
+// src/services/mailgen/index.ts
 var mailGenerator = new import_mailgen.default({
   theme: "default",
   product: {
     name: "Goals Base",
-    link: "http://yourproductname.com/"
+    link: "https://www.linkedin.com/in/lekandar/"
   }
 });
 var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message, duration = 1 }) {
-  const generatedOtp = OTPGenerator;
+  const payload = { email, subject, message };
   const emailBody = mailGenerator.generate({
     body: {
-      intro: "Welcome to your new Goals Base account",
+      intro: message,
       action: {
-        instructions: `To get started with your account, please enter this otp ${generatedOtp}, it will expiry in ${duration} hours time`,
+        instructions: `To get started with your account, please enter this otp ${OTPGenerator}, it will expiry in ${duration} hours time`,
         button: {
           color: "green",
           text: "Welcome to GoalBase",
-          link: "http://yourproductname.com/confirm"
+          link: "https://www.linkedin.com/in/lekandar/"
         }
       }
     }
   });
   try {
-    if (!email && !subject && !message) {
+    if (!payload) {
       throw Error("Provide Value Fields For Email, Subject, Message");
     }
     yield OtpModel_default.deleteOne({ email });
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email,
-      subject: "Message From Goals Base",
+      subject,
       html: emailBody
     };
     yield sendEmail(mailOptions);
     const newOTP = yield new OtpModel_default({
       email,
-      otp: generatedOtp
+      otp: OTPGenerator,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 36e5 * +duration
     });
     const createdOTPRecord = yield newOTP.save();
     return createdOTPRecord;
@@ -247,10 +264,23 @@ var VerifyOtp = (req, res) => __async(void 0, null, function* () {
     }
     const matchedOTPRecord = yield OtpModel_default.findOne({ email });
     if (!matchedOTPRecord) {
-      throw Error("No otp record");
+      return res.status(400).json({ success: false, message: "No otp record" });
+    }
+    const { expiresAt } = matchedOTPRecord;
+    if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
+      yield OtpModel_default.deleteOne({ email });
+      return res.status(400).json({ success: false, message: "Code has expired. Request for a new" });
     }
     const validOTP = otp;
     return res.status(200).json({ valid: validOTP });
+  } catch (error) {
+    throw error;
+  }
+});
+var DeleteOtp = (req, res) => __async(void 0, null, function* () {
+  const { email } = req.body;
+  try {
+    yield OtpModel_default.deleteOne({ email });
   } catch (error) {
     throw error;
   }
@@ -269,13 +299,9 @@ var SendEmail = (req, res) => __async(void 0, null, function* () {
     console.log(error);
   }
 });
-var generateToken = (id) => {
-  return import_jsonwebtoken.default.sign({ id }, process.env.JWT_SECRET || "jwt", {
-    expiresIn: "30d"
-  });
-};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  DeleteOtp,
   SendEmail,
   SendVerificationOTPEmail,
   VerifyOtp,

@@ -18,7 +18,7 @@ export const sendOTP = async ({ email, subject, message, duration = 1 }: IMailOp
   const payload = {email, subject, message}
   const emailBody = mailGenerator.generate({
   body: {
-    intro: 'Welcome to your new Goals Base account',
+    intro: message,
     action: {
       instructions: `To get started with your account, please enter this otp ${OTPGenerator}, it will expiry in ${duration} hours time`,
       button: {
@@ -38,7 +38,7 @@ export const sendOTP = async ({ email, subject, message, duration = 1 }: IMailOp
     const mailOptions = {
       from: process.env.SMTP_USER as string,
       to: email,
-      subject: 'Message From Goals Base',
+      subject: subject,
       html: emailBody,
       };
       await sendEmail(mailOptions)

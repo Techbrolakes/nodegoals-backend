@@ -98,25 +98,39 @@ export const SendVerificationOTPEmail = async (req: Request, res: Response) => {
 // Verify OTP 
 export const VerifyOtp = async (req: Request, res: Response) => {
   const { email, otp } = req.body;
-
   try {
     if (!email && !otp) { 
       return res.status(400).json({ success: false, message: 'No Email and Otp' });
     }
-
     // ensure otp record exists
     const matchedOTPRecord = await OTP.findOne({ email })
     if (!matchedOTPRecord) {
-      throw Error('No otp record')
+     return res.status(400).json({ success: false, message: 'No otp record' });
     }
+    const { expiresAt } = matchedOTPRecord
+    // checking for expired code
+   if (typeof expiresAt === 'undefined' || expiresAt.getTime() < Date.now()) { 
+     await OTP.deleteOne({ email });
+     return res.status(400).json({ success: false, message: 'Code has expired. Request for a new' });
+  }
 
     const validOTP = otp
-
     return res.status(200).json({valid: validOTP})
   } catch (error) {
     throw(error)
   }
 }
+
+// Delete OTP 
+export const DeleteOtp = async (req: Request, res: Response) => {
+  const {email} = req.body
+  try {
+    await OTP.deleteOne({email})    
+  } catch (error) {
+    throw error
+  }
+}
+
 
 
 // Send Email Controller
