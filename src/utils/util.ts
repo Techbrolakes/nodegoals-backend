@@ -6,6 +6,21 @@ import { sendOTP } from '@services/mailgen';
 import { IEmail, IEmailOTP } from './types';
 import User from '@models/UserModel';
 
+
+// Verify Email
+export const VerifyUserEmail = async ({ email, otp }: IEmailOTP) => { 
+  try {
+    const validOTP = await VerifyOtp({ email, otp })
+    if (!validOTP) {
+      throw new Error("Invalid Code Passed, Check your inbox")
+    }
+    await deleteOtp({ email })
+    return
+  } catch (error) {
+    throw error
+  }
+}
+
 // Send Verification Email
 export const SendVerificationOTPEmail = async (email:any) => {
   try {

@@ -86,8 +86,8 @@ export const ResendVerification = async (req: Request, res: Response) => {
         success: true,
         message: "OTP Code Sent successfully",
       })
-  } catch (error) {
-    return res.status(404).json({success: false, message: error});
+  } catch (error:any) {
+    return res.status(404).json({success: false, message: error.message});
   }
 }
 
@@ -95,15 +95,13 @@ export const ResendVerification = async (req: Request, res: Response) => {
 export const VerifyUserEmail = async (req: Request, res: Response) => {
   const { email, otp } = req.body
   try {
-    const validOTP = await VerifyOtp({email , otp})
-    if (!validOTP) {
-      throw new Error("Invalid code passed. Check your inbox")
+    if (!email && !otp) {
+    return res.status(404).json({success: false, message: "Otp & Email not found"});
     }
-    await User.updateOne({email}, {verified: true})
-    await deleteOtp(email)
+    await VerifyUserEmail(email, otp)
     res.status(200).json({email, verified: true})
-  } catch (error) {
-    throw (error)
+  } catch (error:any) {
+    return res.status(404).json({success: false, message: error.message});
   }
 }
 

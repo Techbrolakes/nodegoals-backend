@@ -50,6 +50,7 @@ __export(util_exports, {
   SendEmail: () => SendEmail,
   SendVerificationOTPEmail: () => SendVerificationOTPEmail,
   VerifyOtp: () => VerifyOtp,
+  VerifyUserEmail: () => VerifyUserEmail,
   deleteOtp: () => deleteOtp,
   generateToken: () => generateToken
 });
@@ -168,6 +169,18 @@ var User = (0, import_mongoose2.model)("Users", userSchema);
 var UserModel_default = User;
 
 // src/utils/util.ts
+var VerifyUserEmail = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
+  try {
+    const validOTP = yield VerifyOtp({ email, otp });
+    if (!validOTP) {
+      throw new Error("Invalid Code Passed, Check your inbox");
+    }
+    yield deleteOtp({ email });
+    return;
+  } catch (error) {
+    throw error;
+  }
+});
 var SendVerificationOTPEmail = (email) => __async(void 0, null, function* () {
   try {
     const existingUser = yield UserModel_default.findOne({ email });
@@ -238,6 +251,7 @@ var generateToken = (id) => {
   SendEmail,
   SendVerificationOTPEmail,
   VerifyOtp,
+  VerifyUserEmail,
   deleteOtp,
   generateToken
 });

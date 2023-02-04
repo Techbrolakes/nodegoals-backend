@@ -1636,33 +1636,6 @@ var SendVerificationOTPEmail = (email) => __async(void 0, null, function* () {
     throw new Error(error);
   }
 });
-var deleteOtp = (_0) => __async(void 0, [_0], function* ({ email }) {
-  try {
-    yield OtpModel_default.deleteOne({ email });
-  } catch (error) {
-    throw new Error(error);
-  }
-});
-var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
-  try {
-    if (!email && !otp) {
-      throw new Error("No Email or otp");
-    }
-    const matchedOTPRecord = yield OtpModel_default.findOne({ email });
-    if (!matchedOTPRecord) {
-      throw new Error("No otp record found ");
-    }
-    const { expiresAt } = matchedOTPRecord;
-    if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
-      yield OtpModel_default.deleteOne({ email });
-      throw new Error("Code has expired");
-    }
-    const validOTP = otp;
-    return { valid: validOTP };
-  } catch (error) {
-    throw new Error(error);
-  }
-});
 var OTPGenerator = import_otp_generator.default.generate(4, {
   digits: true,
   specialChars: false,
@@ -1746,21 +1719,19 @@ var ResendVerification = (req, res) => __async(void 0, null, function* () {
       message: "OTP Code Sent successfully"
     });
   } catch (error) {
-    return res.status(404).json({ success: false, message: error });
+    return res.status(404).json({ success: false, message: error.message });
   }
 });
 var VerifyUserEmail = (req, res) => __async(void 0, null, function* () {
   const { email, otp } = req.body;
   try {
-    const validOTP = yield VerifyOtp({ email, otp });
-    if (!validOTP) {
-      throw new Error("Invalid code passed. Check your inbox");
+    if (!email && !otp) {
+      return res.status(404).json({ success: false, message: "Otp & Email not found" });
     }
-    yield UserModel_default.updateOne({ email }, { verified: true });
-    yield deleteOtp(email);
+    yield VerifyUserEmail(email, otp);
     res.status(200).json({ email, verified: true });
   } catch (error) {
-    throw error;
+    return res.status(404).json({ success: false, message: error.message });
   }
 });
 
