@@ -278,7 +278,7 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Email does not exist" });
   }
   if (!user.verified) {
-    return res.status(400).json({ success: false, message: "Email has not been verified yet, Check your inbox" });
+    return res.status(400).json({ success: false, isVerified: user.verified, message: "Email has not been verified yet, Check your inbox" });
   }
   if (user && (yield import_bcrypt.default.compare(password, user.password))) {
     res.status(201).json({

@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import User from "@models/UserModel";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv"
-import { SendVerificationOTPEmail, VerifyOtp, VerifyUserEmail, deleteOtp, generateToken } from "@utils/util";
+import { SendVerificationOTPEmail,  VerifyUserEmail , generateToken } from "@utils/util";
 dotenv.config()
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -46,12 +46,12 @@ export const registerUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ email})
   if (!user) {
     return res.status(400).json({success: false , message: 'Email does not exist' });
   }
    if (!user.verified) {
-    return res.status(400).json({success: false , message: 'Email has not been verified yet, Check your inbox' });
+    return res.status(400).json({success: false , isVerified: user.verified , message: 'Email has not been verified yet, Check your inbox' });
   }
   
   if (user && (await bcrypt.compare(password, user.password))) {
