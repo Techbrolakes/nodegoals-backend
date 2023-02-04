@@ -46,11 +46,8 @@ var __async = (__this, __arguments, generator) => {
 // src/controllers/userController.ts
 var userController_exports = {};
 __export(userController_exports, {
-  SendEmail: () => SendEmail,
-  SendVerificationOTPEmail: () => SendVerificationOTPEmail,
-  VerifyOtp: () => VerifyOtp,
+  ResendVerification: () => ResendVerification,
   VerifyUserEmail: () => VerifyUserEmail,
-  deleteOtp: () => deleteOtp,
   loginUser: () => loginUser,
   registerUser: () => registerUser
 });
@@ -73,6 +70,10 @@ var UserModel_default = User;
 var import_bcrypt = __toESM(require("bcrypt"));
 var import_dotenv2 = __toESM(require("dotenv"));
 
+// src/utils/util.ts
+var import_otp_generator = __toESM(require("otp-generator"));
+var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
+
 // src/models/OtpModel.ts
 var import_mongoose2 = require("mongoose");
 var OTPSchema = new import_mongoose2.Schema({
@@ -86,21 +87,6 @@ var OTPSchema = new import_mongoose2.Schema({
 });
 var OTP = (0, import_mongoose2.model)("OTP", OTPSchema);
 var OtpModel_default = OTP;
-
-// src/utils/util.ts
-var import_otp_generator = __toESM(require("otp-generator"));
-var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
-var OTPGenerator = import_otp_generator.default.generate(4, {
-  digits: true,
-  specialChars: false,
-  lowerCaseAlphabets: false,
-  upperCaseAlphabets: false
-});
-var generateToken = (id) => {
-  return import_jsonwebtoken.default.sign({ id }, process.env.JWT_SECRET || "jwt", {
-    expiresIn: "30d"
-  });
-};
 
 // src/services/mailgen/index.ts
 var import_mailgen = __toESM(require("mailgen"));
@@ -185,6 +171,64 @@ var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message
   }
 });
 
+// src/utils/util.ts
+var SendVerificationOTPEmail = (email) => __async(void 0, null, function* () {
+  try {
+    const existingUser = yield UserModel_default.findOne({ email });
+    if (!existingUser) {
+      throw new Error("Email does not exist");
+    }
+    const otpDetails = {
+      email,
+      subject: "Email Verification",
+      message: "Verify your email with the code below",
+      duration: 1
+    };
+    const createdOTP = yield sendOTP(otpDetails);
+    return createdOTP;
+  } catch (error) {
+    throw error(error);
+  }
+});
+var deleteOtp = (_0) => __async(void 0, [_0], function* ({ email }) {
+  try {
+    yield OtpModel_default.deleteOne({ email });
+  } catch (error) {
+    throw error;
+  }
+});
+var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
+  try {
+    if (!email && !otp) {
+      throw Error("No Email or otp");
+    }
+    const matchedOTPRecord = yield OtpModel_default.findOne({ email });
+    if (!matchedOTPRecord) {
+      throw Error("No otp record found ");
+    }
+    const { expiresAt } = matchedOTPRecord;
+    if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
+      yield OtpModel_default.deleteOne({ email });
+      throw Error("Code has expired");
+    }
+    const validOTP = otp;
+    return { valid: validOTP };
+  } catch (error) {
+    throw error;
+  }
+});
+var OTPGenerator = import_otp_generator.default.generate(4, {
+  digits: true,
+  specialChars: false,
+  lowerCaseAlphabets: false,
+  upperCaseAlphabets: false
+});
+var generateToken = (id) => {
+  return import_jsonwebtoken.default.sign({ id }, process.env.JWT_SECRET || "jwt", {
+    expiresIn: "30d"
+  });
+};
+
 // src/controllers/userController.ts
 import_dotenv2.default.config();
 var registerUser = (req, res) => __async(void 0, null, function* () {
@@ -243,28 +287,26 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Invalid Password" });
   }
 });
-var SendVerificationOTPEmail = (email) => __async(void 0, null, function* () {
+var ResendVerification = (req, res) => __async(void 0, null, function* () {
+  const { email } = req.body;
   try {
-    const existingUser = yield UserModel_default.findOne({ email });
+    const existingUser = UserModel_default.findOne({ email });
     if (!existingUser) {
-      throw Error("Email does not exist");
+      return res.status(400).json({ success: false, message: "Email does not exist" });
     }
-    const otpDetails = {
-      email,
-      subject: "Email Verification",
-      message: "Verify your email with the code below",
-      duration: 1
-    };
-    const createdOTP = yield sendOTP(otpDetails);
-    return createdOTP;
+    yield SendVerificationOTPEmail(email);
+    res.status(201).json({
+      success: true,
+      message: "OTP Code Sent successfully"
+    });
   } catch (error) {
-    throw error(error);
+    return res.status(404).json({ success: false, message: error });
   }
 });
 var VerifyUserEmail = (req, res) => __async(void 0, null, function* () {
   const { email, otp } = req.body;
   try {
-    const validOTP = yield VerifyOtp(email, otp);
+    const validOTP = yield VerifyOtp({ email, otp });
     if (!validOTP) {
       throw new Error("Invalid code passed. Check your inbox");
     }
@@ -275,54 +317,10 @@ var VerifyUserEmail = (req, res) => __async(void 0, null, function* () {
     throw error;
   }
 });
-var VerifyOtp = (email, otp) => __async(void 0, null, function* () {
-  try {
-    if (!email && !otp) {
-      throw Error("No Email or otp");
-    }
-    const matchedOTPRecord = yield OtpModel_default.findOne({ email });
-    if (!matchedOTPRecord) {
-      throw Error("No otp record found ");
-    }
-    const { expiresAt } = matchedOTPRecord;
-    if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
-      yield OtpModel_default.deleteOne({ email });
-      throw Error("Code has expired");
-    }
-    const validOTP = otp;
-    return { valid: validOTP };
-  } catch (error) {
-    throw error;
-  }
-});
-var deleteOtp = (email) => __async(void 0, null, function* () {
-  try {
-    yield OtpModel_default.deleteOne({ email });
-  } catch (error) {
-    throw error;
-  }
-});
-var SendEmail = (req, res) => __async(void 0, null, function* () {
-  try {
-    const { email, subject, message, duration } = req.body;
-    const createdOTP = yield sendOTP({
-      email,
-      subject,
-      message,
-      duration
-    });
-    res.json(createdOTP);
-  } catch (error) {
-    console.log(error);
-  }
-});
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  SendEmail,
-  SendVerificationOTPEmail,
-  VerifyOtp,
+  ResendVerification,
   VerifyUserEmail,
-  deleteOtp,
   loginUser,
   registerUser
 });

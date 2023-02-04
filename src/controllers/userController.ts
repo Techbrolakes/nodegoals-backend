@@ -3,15 +3,8 @@ import { Request, Response } from "express";
 import User from "@models/UserModel";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv"
-import { VerifyOtp, deleteOtp, generateToken } from "@utils/util";
-import { sendOTP } from "@services/mailgen";
+import { SendVerificationOTPEmail, VerifyOtp, deleteOtp, generateToken } from "@utils/util";
 dotenv.config()
-
-interface IProps{
-  email: string;
-  otp: number
-}
-
 
 export const registerUser = async (req: Request, res: Response) => {
   const { first_name, last_name, email, password, confirm_password } = req.body;
@@ -57,7 +50,7 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
-
+// Login Function
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   
@@ -80,25 +73,22 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 } 
 
-// Verify Email
-export const SendVerificationOTPEmail = async (email:any) => {
 
+// Resend OTP Code
+export const ResendVerification = async (req: Request, res: Response) => {
+  const { email } = req.body
   try {
-    const existingUser = await User.findOne({ email });
+    const existingUser = User.findOne({ email })
     if (!existingUser) {
-      throw Error("Email does not exist")
+       return res.status(400).json({success: false , message: 'Email does not exist' });
     }
-
-    const otpDetails = {
-      email,
-      subject: "Email Verification",
-      message: "Verify your email with the code below",
-      duration: 1
-    }
-    const createdOTP = await sendOTP(otpDetails)
-    return createdOTP
-  } catch (error: any) {
-    throw error(error)
+    await SendVerificationOTPEmail(email)
+     res.status(201).json({
+        success: true,
+        message: "OTP Code Sent successfully",
+      })
+  } catch (error) {
+    return res.status(404).json({success: false, message: error});
   }
 }
 

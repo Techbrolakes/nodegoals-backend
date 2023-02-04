@@ -49,7 +49,7 @@ __export(mailgen_exports, {
   sendOTP: () => sendOTP
 });
 module.exports = __toCommonJS(mailgen_exports);
-var import_mailgen = __toESM(require("mailgen"));
+var import_mailgen2 = __toESM(require("mailgen"));
 
 // src/models/OtpModel.ts
 var import_mongoose = require("mongoose");
@@ -68,6 +68,20 @@ var OtpModel_default = OTP;
 // src/utils/util.ts
 var import_otp_generator = __toESM(require("otp-generator"));
 var import_jsonwebtoken = __toESM(require("jsonwebtoken"));
+
+// src/models/UserModel.ts
+var import_mongoose2 = require("mongoose");
+var userSchema = new import_mongoose2.Schema({
+  first_name: { type: String, required: [true, "first name required"] },
+  last_name: { type: String, required: [true, "last name required"] },
+  email: { type: String, required: [true, "email required"], unique: true },
+  password: { type: String, required: [true, "password required"] },
+  confirm_password: { type: String, required: [true, "confirm password required"] },
+  verified: { type: Boolean, default: false }
+});
+var User = (0, import_mongoose2.model)("Users", userSchema);
+
+// src/utils/util.ts
 var OTPGenerator = import_otp_generator.default.generate(4, {
   digits: true,
   specialChars: false,
@@ -108,7 +122,7 @@ var sendEmail = (mailOptions) => __async(void 0, null, function* () {
 });
 
 // src/services/mailgen/index.ts
-var mailGenerator = new import_mailgen.default({
+var mailGenerator = new import_mailgen2.default({
   theme: "default",
   product: {
     name: "Goals Base",

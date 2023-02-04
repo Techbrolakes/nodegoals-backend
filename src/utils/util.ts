@@ -3,13 +3,31 @@ import jwt from "jsonwebtoken";
 import OTP from '@models/OtpModel';
 import { IMailOptions } from './interfaces';
 import { sendOTP } from '@services/mailgen';
-import { IEmailOTP } from './types';
+import { IEmail, IEmailOTP } from './types';
+import User from '@models/UserModel';
 
-
-
+// Send Verification Email
+export const SendVerificationOTPEmail = async (email:any) => {
+  try {
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      throw new Error("Email does not exist")
+    }
+    const otpDetails = {
+      email,
+      subject: "Email Verification",
+      message: "Verify your email with the code below",
+      duration: 1
+    }
+    const createdOTP = await sendOTP(otpDetails)
+    return createdOTP
+  } catch (error: any) {
+    throw error(error)
+  }
+}
 
 // Delete OTP 
-export const deleteOtp = async (email:any) => {
+export const deleteOtp = async( { email }:IEmail ) => {
   try {
     await OTP.deleteOne({email})    
   } catch (error) {
