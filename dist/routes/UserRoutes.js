@@ -58,7 +58,8 @@ var userSchema = new import_mongoose.Schema({
   last_name: { type: String, required: [true, "last name required"] },
   email: { type: String, required: [true, "email required"], unique: true },
   password: { type: String, required: [true, "password required"] },
-  confirm_password: { type: String, required: [true, "confirm password required"] }
+  confirm_password: { type: String, required: [true, "confirm password required"] },
+  verified: { type: Boolean, default: false }
 });
 var User = (0, import_mongoose.model)("Users", userSchema);
 var UserModel_default = User;
@@ -198,6 +199,7 @@ var registerUser = (req, res) => __async(void 0, null, function* () {
   const hash_confirm_password = yield import_bcrypt.default.hash(confirm_password, salt);
   try {
     const user = yield UserModel_default.create({ first_name, last_name, email, password: hash_password, confirm_password: hash_confirm_password });
+    yield SendVerificationOTPEmail(email);
     if (user) {
       res.status(201).json({
         success: true,
@@ -223,6 +225,9 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
   if (!user) {
     return res.status(400).json({ success: false, message: "Email does not exist" });
   }
+  if (!user.verified) {
+    return res.status(400).json({ success: false, message: "Email has not been verified yet, Check your inbox" });
+  }
   if (user && (yield import_bcrypt.default.compare(password, user.password))) {
     res.status(201).json({
       success: true,
@@ -233,8 +238,7 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Invalid Password" });
   }
 });
-var SendVerificationOTPEmail = (req, res) => __async(void 0, null, function* () {
-  const { email } = req.body;
+var SendVerificationOTPEmail = (email) => __async(void 0, null, function* () {
   try {
     const existingUser = yield UserModel_default.findOne({ email });
     if (!existingUser) {
@@ -247,28 +251,48 @@ var SendVerificationOTPEmail = (req, res) => __async(void 0, null, function* () 
       duration: 1
     };
     const createdOTP = yield sendOTP(otpDetails);
-    return res.status(200).json(createdOTP);
+    return createdOTP;
   } catch (error) {
-    return res.status(400).send(error.message);
+    throw error(error);
   }
 });
-var VerifyOtp = (req, res) => __async(void 0, null, function* () {
+var VerifyUserEmail = (req, res) => __async(void 0, null, function* () {
   const { email, otp } = req.body;
   try {
+    const validOTP = yield VerifyOtp(email, otp);
+    if (!validOTP) {
+      throw new Error("Invalid code passed. Check your inbox");
+    }
+    yield UserModel_default.updateOne({ email }, { verified: true });
+    yield deleteOtp(email);
+    res.status(200).json({ email, verified: true });
+  } catch (error) {
+    throw error;
+  }
+});
+var VerifyOtp = (email, otp) => __async(void 0, null, function* () {
+  try {
     if (!email && !otp) {
-      return res.status(400).json({ success: false, message: "No Email and Otp" });
+      throw Error("No Email or otp");
     }
     const matchedOTPRecord = yield OtpModel_default.findOne({ email });
     if (!matchedOTPRecord) {
-      return res.status(400).json({ success: false, message: "No otp record" });
+      throw Error("No otp record found ");
     }
     const { expiresAt } = matchedOTPRecord;
     if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
       yield OtpModel_default.deleteOne({ email });
-      return res.status(400).json({ success: false, message: "Code has expired. Request for a new" });
+      throw Error("Code has expired");
     }
     const validOTP = otp;
-    return res.status(200).json({ valid: validOTP });
+    return { valid: validOTP };
+  } catch (error) {
+    throw error;
+  }
+});
+var deleteOtp = (email) => __async(void 0, null, function* () {
+  try {
+    yield OtpModel_default.deleteOne({ email });
   } catch (error) {
     throw error;
   }
@@ -278,8 +302,8 @@ var VerifyOtp = (req, res) => __async(void 0, null, function* () {
 var router = import_express.default.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.post("/verifymail", SendVerificationOTPEmail);
-router.post("/verify", VerifyOtp);
+router.post("/sendmail", SendVerificationOTPEmail);
+router.post("/verify", VerifyUserEmail);
 var UserRoutes_default = router;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {});

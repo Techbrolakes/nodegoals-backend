@@ -3,10 +3,14 @@ import { Request, Response } from "express";
 import User from "@models/UserModel";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv"
-import OTP from "@models/OtpModel";
-import { generateToken } from "@utils/util";
+import { VerifyOtp, deleteOtp, generateToken } from "@utils/util";
 import { sendOTP } from "@services/mailgen";
 dotenv.config()
+
+interface IProps{
+  email: string;
+  otp: number
+}
 
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -32,6 +36,7 @@ export const registerUser = async (req: Request, res: Response) => {
 
   try {
     const user = await User.create({ first_name, last_name, email, password: hash_password, confirm_password: hash_confirm_password });
+    await SendVerificationOTPEmail(email)
     if (user) {
       res.status(201).json({
         success: true,
@@ -60,6 +65,9 @@ export const loginUser = async (req: Request, res: Response) => {
   if (!user) {
     return res.status(400).json({success: false , message: 'Email does not exist' });
   }
+   if (!user.verified) {
+    return res.status(400).json({success: false , message: 'Email has not been verified yet, Check your inbox' });
+  }
   
   if (user && (await bcrypt.compare(password, user.password))) {
         res.status(201).json({
@@ -73,8 +81,8 @@ export const loginUser = async (req: Request, res: Response) => {
 } 
 
 // Verify Email
-export const SendVerificationOTPEmail = async (req: Request, res: Response) => {
-  const {email} = req.body
+export const SendVerificationOTPEmail = async (email:any) => {
+
   try {
     const existingUser = await User.findOne({ email });
     if (!existingUser) {
@@ -88,65 +96,27 @@ export const SendVerificationOTPEmail = async (req: Request, res: Response) => {
       duration: 1
     }
     const createdOTP = await sendOTP(otpDetails)
-     return res.status(200).json(createdOTP)
+    return createdOTP
   } catch (error: any) {
-    return res.status(400).send(error.message)
+    throw error(error)
   }
 }
 
 
-// Verify OTP 
-export const VerifyOtp = async (req: Request, res: Response) => {
-  const { email, otp } = req.body;
+// Verify User Email Address
+export const VerifyUserEmail = async (req: Request, res: Response) => {
+  const { email, otp } = req.body
   try {
-    if (!email && !otp) { 
-      return res.status(400).json({ success: false, message: 'No Email and Otp' });
+    const validOTP = await VerifyOtp({email , otp})
+    if (!validOTP) {
+      throw new Error("Invalid code passed. Check your inbox")
     }
-    // ensure otp record exists
-    const matchedOTPRecord = await OTP.findOne({ email })
-    if (!matchedOTPRecord) {
-     return res.status(400).json({ success: false, message: 'No otp record' });
-    }
-    const { expiresAt } = matchedOTPRecord
-    // checking for expired code
-   if (typeof expiresAt === 'undefined' || expiresAt.getTime() < Date.now()) { 
-     await OTP.deleteOne({ email });
-     return res.status(400).json({ success: false, message: 'Code has expired. Request for a new' });
-  }
-
-    const validOTP = otp
-    return res.status(200).json({valid: validOTP})
+    await User.updateOne({email}, {verified: true})
+    await deleteOtp(email)
+    res.status(200).json({email, verified: true})
   } catch (error) {
-    throw(error)
+    throw (error)
   }
 }
 
-// Delete OTP 
-export const DeleteOtp = async (req: Request, res: Response) => {
-  const {email} = req.body
-  try {
-    await OTP.deleteOne({email})    
-  } catch (error) {
-    throw error
-  }
-}
-
-
-
-// Send Email Controller
-export const SendEmail = async (req: Request, res: Response) => {
-  try {
-    const { email, subject, message, duration } = req.body;
-
-    const createdOTP = await sendOTP({
-      email,
-      subject,
-      message,
-      duration,
-    })
-    res.json(createdOTP)
-  } catch (error) {
-    console.log(error)
-  }
-}
 
