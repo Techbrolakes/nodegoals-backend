@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import User from "@models/UserModel";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv"
-import { SendVerificationOTPEmail, VerifyOtp, deleteOtp, generateToken } from "@utils/util";
+import { SendVerificationOTPEmail, VerifyOtp, VerifyUserEmail, deleteOtp, generateToken } from "@utils/util";
 dotenv.config()
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -33,16 +33,8 @@ export const registerUser = async (req: Request, res: Response) => {
     if (user) {
       res.status(201).json({
         success: true,
-        message: "User created successfully",
-        data: {
-          _id: user._id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-        password: user.password,
-        confirm_password: user.confirm_password,
-        token: generateToken(user._id)
-       }
+        message: `A verification mail has been sent to ${email}`,
+        data: null
       })
     }
   } catch (error:any) {
@@ -92,13 +84,13 @@ export const ResendVerification = async (req: Request, res: Response) => {
 }
 
 // Verify User Email Address
-export const VerifyUserEmail = async (req: Request, res: Response) => {
+export const VerifyEmail = async (req: Request, res: Response) => {
   const { email, otp } = req.body
   try {
     if (!email && !otp) {
     return res.status(404).json({success: false, message: "Otp & Email not found"});
     }
-    await VerifyUserEmail(email, otp)
+    await VerifyUserEmail({email, otp})
     res.status(200).json({email, verified: true})
   } catch (error:any) {
     return res.status(404).json({success: false, message: error.message});

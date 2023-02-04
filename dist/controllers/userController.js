@@ -47,7 +47,7 @@ var __async = (__this, __arguments, generator) => {
 var userController_exports = {};
 __export(userController_exports, {
   ResendVerification: () => ResendVerification,
-  VerifyUserEmail: () => VerifyUserEmail,
+  VerifyEmail: () => VerifyEmail,
   loginUser: () => loginUser,
   registerUser: () => registerUser
 });
@@ -172,6 +172,19 @@ var sendOTP = (_0) => __async(void 0, [_0], function* ({ email, subject, message
 });
 
 // src/utils/util.ts
+var VerifyUserEmail = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
+  try {
+    const validOTP = yield VerifyOtp({ email, otp });
+    if (!validOTP) {
+      throw new Error("Invalid Code Passed, Check your inbox");
+    }
+    yield UserModel_default.findOne({ email }, { verified: true });
+    yield deleteOtp({ email });
+    return;
+  } catch (error) {
+    throw error;
+  }
+});
 var SendVerificationOTPEmail = (email) => __async(void 0, null, function* () {
   try {
     const existingUser = yield UserModel_default.findOne({ email });
@@ -186,6 +199,33 @@ var SendVerificationOTPEmail = (email) => __async(void 0, null, function* () {
     };
     const createdOTP = yield sendOTP(otpDetails);
     return createdOTP;
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+var deleteOtp = (_0) => __async(void 0, [_0], function* ({ email }) {
+  try {
+    yield OtpModel_default.deleteOne({ email });
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
+  try {
+    if (!email && !otp) {
+      throw new Error("No Email or otp");
+    }
+    const matchedOTPRecord = yield OtpModel_default.findOne({ email });
+    if (!matchedOTPRecord) {
+      throw new Error("No otp record found ");
+    }
+    const { expiresAt } = matchedOTPRecord;
+    if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
+      yield OtpModel_default.deleteOne({ email });
+      throw new Error("Code has expired");
+    }
+    const validOTP = otp;
+    return { valid: validOTP };
   } catch (error) {
     throw new Error(error);
   }
@@ -225,16 +265,8 @@ var registerUser = (req, res) => __async(void 0, null, function* () {
     if (user) {
       res.status(201).json({
         success: true,
-        message: "User created successfully",
-        data: {
-          _id: user._id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
-          password: user.password,
-          confirm_password: user.confirm_password,
-          token: generateToken(user._id)
-        }
+        message: `A verification mail has been sent to ${email}`,
+        data: null
       });
     }
   } catch (error) {
@@ -276,13 +308,13 @@ var ResendVerification = (req, res) => __async(void 0, null, function* () {
     return res.status(404).json({ success: false, message: error.message });
   }
 });
-var VerifyUserEmail = (req, res) => __async(void 0, null, function* () {
+var VerifyEmail = (req, res) => __async(void 0, null, function* () {
   const { email, otp } = req.body;
   try {
     if (!email && !otp) {
       return res.status(404).json({ success: false, message: "Otp & Email not found" });
     }
-    yield VerifyUserEmail(email, otp);
+    yield VerifyUserEmail({ email, otp });
     res.status(200).json({ email, verified: true });
   } catch (error) {
     return res.status(404).json({ success: false, message: error.message });
@@ -291,7 +323,7 @@ var VerifyUserEmail = (req, res) => __async(void 0, null, function* () {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   ResendVerification,
-  VerifyUserEmail,
+  VerifyEmail,
   loginUser,
   registerUser
 });

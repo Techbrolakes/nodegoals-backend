@@ -14,6 +14,7 @@ export const VerifyUserEmail = async ({ email, otp }: IEmailOTP) => {
     if (!validOTP) {
       throw new Error("Invalid Code Passed, Check your inbox")
     }
+    await User.findOne({email}, {verified: true})
     await deleteOtp({ email })
     return
   } catch (error) {

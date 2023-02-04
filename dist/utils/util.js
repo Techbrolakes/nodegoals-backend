@@ -175,6 +175,7 @@ var VerifyUserEmail = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
     if (!validOTP) {
       throw new Error("Invalid Code Passed, Check your inbox");
     }
+    yield UserModel_default.findOne({ email }, { verified: true });
     yield deleteOtp({ email });
     return;
   } catch (error) {
