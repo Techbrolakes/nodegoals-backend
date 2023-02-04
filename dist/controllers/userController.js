@@ -187,34 +187,34 @@ var SendVerificationOTPEmail = (email) => __async(void 0, null, function* () {
     const createdOTP = yield sendOTP(otpDetails);
     return createdOTP;
   } catch (error) {
-    throw error(error);
+    throw new Error(error);
   }
 });
 var deleteOtp = (_0) => __async(void 0, [_0], function* ({ email }) {
   try {
     yield OtpModel_default.deleteOne({ email });
   } catch (error) {
-    throw error;
+    throw new Error(error);
   }
 });
 var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
   try {
     if (!email && !otp) {
-      throw Error("No Email or otp");
+      throw new Error("No Email or otp");
     }
     const matchedOTPRecord = yield OtpModel_default.findOne({ email });
     if (!matchedOTPRecord) {
-      throw Error("No otp record found ");
+      throw new Error("No otp record found ");
     }
     const { expiresAt } = matchedOTPRecord;
     if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
       yield OtpModel_default.deleteOne({ email });
-      throw Error("Code has expired");
+      throw new Error("Code has expired");
     }
     const validOTP = otp;
     return { valid: validOTP };
   } catch (error) {
-    throw error;
+    throw new Error(error);
   }
 });
 var OTPGenerator = import_otp_generator.default.generate(4, {

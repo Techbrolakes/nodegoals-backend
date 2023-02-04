@@ -22,7 +22,7 @@ export const SendVerificationOTPEmail = async (email:any) => {
     const createdOTP = await sendOTP(otpDetails)
     return createdOTP
   } catch (error: any) {
-    throw error(error)
+    throw new Error(error)
   }
 }
 
@@ -30,8 +30,8 @@ export const SendVerificationOTPEmail = async (email:any) => {
 export const deleteOtp = async( { email }:IEmail ) => {
   try {
     await OTP.deleteOne({email})    
-  } catch (error) {
-    throw error
+  } catch (error:any) {
+    throw new Error(error)
   }
 }
 
@@ -39,23 +39,23 @@ export const deleteOtp = async( { email }:IEmail ) => {
 export const VerifyOtp = async ({email, otp}: IEmailOTP) => {
   try {
     if (!email && !otp) { 
-      throw Error("No Email or otp")
+      throw new Error("No Email or otp")
     }
     // ensure otp record exists
     const matchedOTPRecord = await OTP.findOne({ email })
     if (!matchedOTPRecord) {
-      throw Error("No otp record found ")
+      throw new Error("No otp record found ")
     }
     const { expiresAt } = matchedOTPRecord
     // checking for expired code
    if (typeof expiresAt === 'undefined' || expiresAt.getTime() < Date.now()) { 
      await OTP.deleteOne({ email });
-     throw Error("Code has expired")
+     throw new Error("Code has expired")
   }
     const validOTP = otp
     return {valid: validOTP}
-  } catch (error) {
-    throw(error)
+  } catch (error:any) {
+    throw new Error(error)
   }
 }
 
@@ -64,8 +64,8 @@ export const SendEmail = async ({duration,email,message,subject}:IMailOptions) =
   try {
     const createdOTP = await sendOTP({email,subject,message,duration})
     return createdOTP
-  } catch (error) {
-    throw(error)
+  } catch (error:any) {
+    throw new Error(error)
   }
 }
 

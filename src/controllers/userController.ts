@@ -73,7 +73,6 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 } 
 
-
 // Resend OTP Code
 export const ResendVerification = async (req: Request, res: Response) => {
   const { email } = req.body
@@ -91,7 +90,6 @@ export const ResendVerification = async (req: Request, res: Response) => {
     return res.status(404).json({success: false, message: error});
   }
 }
-
 
 // Verify User Email Address
 export const VerifyUserEmail = async (req: Request, res: Response) => {
