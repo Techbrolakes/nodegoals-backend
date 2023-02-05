@@ -175,7 +175,7 @@ var VerifyUserEmail = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
     if (!validOTP) {
       throw new Error("Invalid Code Passed, Check your inbox");
     }
-    yield UserModel_default.findOne({ email }, { verified: true });
+    yield UserModel_default.updateOne({ email }, { verified: true });
     yield deleteOtp({ email });
     return;
   } catch (error) {
@@ -213,16 +213,20 @@ var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
       throw new Error("No Email or otp");
     }
     const matchedOTPRecord = yield OtpModel_default.findOne({ email });
+    console.log(matchedOTPRecord);
     if (!matchedOTPRecord) {
-      throw new Error("No otp record found ");
+      throw new Error("User already Verified ");
     }
     const { expiresAt } = matchedOTPRecord;
     if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
       yield OtpModel_default.deleteOne({ email });
       throw new Error("Code has expired");
     }
-    const validOTP = otp;
-    return { valid: validOTP };
+    if (matchedOTPRecord.otp === otp) {
+      return true;
+    } else {
+      throw new Error("Incorrect Otp");
+    }
   } catch (error) {
     throw new Error(error);
   }

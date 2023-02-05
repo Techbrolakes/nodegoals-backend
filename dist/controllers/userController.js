@@ -178,7 +178,7 @@ var VerifyUserEmail = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
     if (!validOTP) {
       throw new Error("Invalid Code Passed, Check your inbox");
     }
-    yield UserModel_default.findOne({ email }, { verified: true });
+    yield UserModel_default.updateOne({ email }, { verified: true });
     yield deleteOtp({ email });
     return;
   } catch (error) {
@@ -216,16 +216,20 @@ var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
       throw new Error("No Email or otp");
     }
     const matchedOTPRecord = yield OtpModel_default.findOne({ email });
+    console.log(matchedOTPRecord);
     if (!matchedOTPRecord) {
-      throw new Error("No otp record found ");
+      throw new Error("User already Verified ");
     }
     const { expiresAt } = matchedOTPRecord;
     if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
       yield OtpModel_default.deleteOne({ email });
       throw new Error("Code has expired");
     }
-    const validOTP = otp;
-    return { valid: validOTP };
+    if (matchedOTPRecord.otp === otp) {
+      return true;
+    } else {
+      throw new Error("Incorrect Otp");
+    }
   } catch (error) {
     throw new Error(error);
   }
@@ -260,7 +264,13 @@ var registerUser = (req, res) => __async(void 0, null, function* () {
   const hash_password = yield import_bcrypt.default.hash(password, salt);
   const hash_confirm_password = yield import_bcrypt.default.hash(confirm_password, salt);
   try {
-    const user = yield UserModel_default.create({ first_name, last_name, email, password: hash_password, confirm_password: hash_confirm_password });
+    const user = yield UserModel_default.create({
+      first_name,
+      last_name,
+      email,
+      password: hash_password,
+      confirm_password: hash_confirm_password
+    });
     yield SendVerificationOTPEmail(email);
     if (user) {
       res.status(201).json({
@@ -280,7 +290,11 @@ var loginUser = (req, res) => __async(void 0, null, function* () {
     return res.status(400).json({ success: false, message: "Email does not exist" });
   }
   if (!user.verified) {
-    return res.status(400).json({ success: false, isVerified: user.verified, message: "Email has not been verified yet, Check your inbox" });
+    return res.status(400).json({
+      success: false,
+      isVerified: user.verified,
+      message: "Email has not been verified yet, Check your inbox"
+    });
   }
   if (user && (yield import_bcrypt.default.compare(password, user.password))) {
     res.status(201).json({
@@ -314,8 +328,9 @@ var VerifyEmail = (req, res) => __async(void 0, null, function* () {
     if (!email && !otp) {
       return res.status(404).json({ success: false, message: "Otp & Email not found" });
     }
-    yield VerifyUserEmail({ email, otp });
-    res.status(200).json({ email, verified: true });
+    const result = yield VerifyUserEmail({ email, otp });
+    console.log(result);
+    res.status(200).json({ success: true, message: "Email Successfully verified, Welcome to Goalbase" });
   } catch (error) {
     return res.status(404).json({ success: false, message: error.message });
   }
