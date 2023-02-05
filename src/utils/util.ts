@@ -78,16 +78,6 @@ export const VerifyOtp = async ({ email, otp }: IEmailOTP) => {
     }
 };
 
-// Send Email Function
-export const SendEmail = async ({ duration, email, message, subject }: IMailOptions) => {
-    try {
-        const createdOTP = await sendOTP({ email, subject, message, duration });
-        return createdOTP;
-    } catch (error: any) {
-        throw new Error(error);
-    }
-};
-
 // Generate OTP
 export const OTPGenerator = otpGenerator.generate(4, {
     digits: true,

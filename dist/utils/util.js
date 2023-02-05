@@ -47,7 +47,6 @@ var __async = (__this, __arguments, generator) => {
 var util_exports = {};
 __export(util_exports, {
   OTPGenerator: () => OTPGenerator,
-  SendEmail: () => SendEmail,
   SendVerificationOTPEmail: () => SendVerificationOTPEmail,
   VerifyOtp: () => VerifyOtp,
   VerifyUserEmail: () => VerifyUserEmail,
@@ -231,14 +230,6 @@ var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
     throw new Error(error);
   }
 });
-var SendEmail = (_0) => __async(void 0, [_0], function* ({ duration, email, message, subject }) {
-  try {
-    const createdOTP = yield sendOTP({ email, subject, message, duration });
-    return createdOTP;
-  } catch (error) {
-    throw new Error(error);
-  }
-});
 var OTPGenerator = import_otp_generator.default.generate(4, {
   digits: true,
   specialChars: false,
@@ -253,7 +244,6 @@ var generateToken = (id) => {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   OTPGenerator,
-  SendEmail,
   SendVerificationOTPEmail,
   VerifyOtp,
   VerifyUserEmail,
