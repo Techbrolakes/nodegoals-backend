@@ -212,9 +212,8 @@ var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
       throw new Error("No Email or otp");
     }
     const matchedOTPRecord = yield OtpModel_default.findOne({ email });
-    console.log(matchedOTPRecord);
     if (!matchedOTPRecord) {
-      throw new Error("User already Verified ");
+      throw new Error("User Does Not Exist");
     }
     const { expiresAt } = matchedOTPRecord;
     if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
@@ -224,7 +223,7 @@ var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
     if (matchedOTPRecord.otp === otp) {
       return true;
     } else {
-      throw new Error("Incorrect Otp");
+      throw new Error("Incorrect OTP, Kindly Try Again");
     }
   } catch (error) {
     throw new Error(error);

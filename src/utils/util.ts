@@ -1,7 +1,6 @@
 import otpGenerator from 'otp-generator';
 import jwt from 'jsonwebtoken';
 import OTP from '@models/OtpModel';
-import { IMailOptions } from './interfaces';
 import { sendOTP } from '@services/mailgen';
 import { IEmail, IEmailOTP } from './types';
 import User from '@models/UserModel';
@@ -58,9 +57,8 @@ export const VerifyOtp = async ({ email, otp }: IEmailOTP) => {
         }
         // ensure otp record exists
         const matchedOTPRecord = await OTP.findOne({ email });
-        console.log(matchedOTPRecord);
         if (!matchedOTPRecord) {
-            throw new Error('User already Verified ');
+            throw new Error('User Does Not Exist');
         }
         const { expiresAt } = matchedOTPRecord;
         // checking for expired code
@@ -71,7 +69,7 @@ export const VerifyOtp = async ({ email, otp }: IEmailOTP) => {
         if (matchedOTPRecord.otp === otp) {
             return true;
         } else {
-            throw new Error('Incorrect Otp');
+            throw new Error('Incorrect OTP, Kindly Try Again');
         }
     } catch (error: any) {
         throw new Error(error);

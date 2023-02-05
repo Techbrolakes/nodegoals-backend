@@ -1662,9 +1662,8 @@ var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
       throw new Error("No Email or otp");
     }
     const matchedOTPRecord = yield OtpModel_default.findOne({ email });
-    console.log(matchedOTPRecord);
     if (!matchedOTPRecord) {
-      throw new Error("User already Verified ");
+      throw new Error("User Does Not Exist");
     }
     const { expiresAt } = matchedOTPRecord;
     if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
@@ -1674,7 +1673,7 @@ var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
     if (matchedOTPRecord.otp === otp) {
       return true;
     } else {
-      throw new Error("Incorrect Otp");
+      throw new Error("Incorrect OTP, Kindly Try Again");
     }
   } catch (error) {
     throw new Error(error);
@@ -1781,6 +1780,20 @@ var VerifyEmail = (req, res) => __async(void 0, null, function* () {
     return res.status(404).json({ success: false, message: error.message });
   }
 });
+var RecoverPassword = (req, res) => __async(void 0, null, function* () {
+  const { email } = req.body;
+  try {
+    const user = yield UserModel_default.findOne({ email });
+    if (user) {
+      yield SendVerificationOTPEmail(email);
+      return res.status(404).json({ success: true, message: `A reset email has been sent to ${email}` });
+    } else {
+      return res.status(404).json({ success: false, message: `Email Does Not Exist` });
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+});
 
 // src/routes/UserRoutes.ts
 var router = import_express.default.Router();
@@ -1788,6 +1801,7 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/resend", ResendVerification);
 router.post("/verify", VerifyEmail);
+router.post("/recover", RecoverPassword);
 var UserRoutes_default = router;
 
 // src/routes/GoalRoutes.ts

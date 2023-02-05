@@ -107,3 +107,19 @@ export const VerifyEmail = async (req: Request, res: Response) => {
         return res.status(404).json({ success: false, message: error.message });
     }
 };
+
+export const RecoverPassword = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+
+        if (user) {
+            await SendVerificationOTPEmail(email);
+            return res.status(404).json({ success: true, message: `A reset email has been sent to ${email}` });
+        } else {
+            return res.status(404).json({ success: false, message: `Email Does Not Exist` });
+        }
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
