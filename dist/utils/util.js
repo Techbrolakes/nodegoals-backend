@@ -213,7 +213,7 @@ var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
     }
     const matchedOTPRecord = yield OtpModel_default.findOne({ email });
     if (!matchedOTPRecord) {
-      throw new Error("User Does Not Exist");
+      throw new Error("Try resending the otp record");
     }
     const { expiresAt } = matchedOTPRecord;
     if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {

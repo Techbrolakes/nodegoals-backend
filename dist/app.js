@@ -1663,7 +1663,7 @@ var VerifyOtp = (_0) => __async(void 0, [_0], function* ({ email, otp }) {
     }
     const matchedOTPRecord = yield OtpModel_default.findOne({ email });
     if (!matchedOTPRecord) {
-      throw new Error("User Does Not Exist");
+      throw new Error("Try resending the otp record");
     }
     const { expiresAt } = matchedOTPRecord;
     if (typeof expiresAt === "undefined" || expiresAt.getTime() < Date.now()) {
@@ -1773,8 +1773,7 @@ var VerifyEmail = (req, res) => __async(void 0, null, function* () {
     if (!email && !otp) {
       return res.status(404).json({ success: false, message: "Otp & Email not found" });
     }
-    const result = yield VerifyUserEmail({ email, otp });
-    console.log(result);
+    yield VerifyUserEmail({ email, otp });
     res.status(200).json({ success: true, message: "Email Successfully verified, Welcome to Goalbase" });
   } catch (error) {
     return res.status(404).json({ success: false, message: error.message });
@@ -1784,14 +1783,56 @@ var RecoverPassword = (req, res) => __async(void 0, null, function* () {
   const { email } = req.body;
   try {
     const user = yield UserModel_default.findOne({ email });
-    if (user) {
+    if (!(user == null ? void 0 : user.verified)) {
       yield SendVerificationOTPEmail(email);
+      return res.status(404).json({ success: false, message: `Email is not verified yet, A mail has been sent to your inbox` });
+    }
+    if (user) {
+      const otpDetails = {
+        email,
+        subject: "Reset Password",
+        message: "Enter the code below to reset your password",
+        duration: 1
+      };
+      yield sendOTP(otpDetails);
       return res.status(404).json({ success: true, message: `A reset email has been sent to ${email}` });
     } else {
       return res.status(404).json({ success: false, message: `Email Does Not Exist` });
     }
   } catch (error) {
-    throw new Error(error.message);
+    return res.status(404).json({ success: false, message: error.message });
+  }
+});
+var VerifyPasswordOTP = (req, res) => __async(void 0, null, function* () {
+  const { email, otp } = req.body;
+  try {
+    const user = yield UserModel_default.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Email does not exist" });
+    }
+    if (!email && !otp) {
+      return res.status(404).json({ success: false, message: "Otp & Email not found" });
+    }
+    yield VerifyUserEmail({ email, otp });
+    res.status(200).json({
+      success: true,
+      message: "OTP Successfully Verified, Kindly Reset Password",
+      token: generateToken(user._id)
+    });
+  } catch (error) {
+    return res.status(404).json({ success: false, message: error.message });
+  }
+});
+var ResetPassword = (req, res) => __async(void 0, null, function* () {
+  const { password, confirm_password } = req.body;
+  const userId = req.user.id;
+  try {
+    const token = generateToken(userId);
+    const user = yield UserModel_default.updateOne({ userId }, { password, confirm_password });
+    if (userId) {
+    }
+  } catch (error) {
+    return res.status(404).json({ success: false, message: error.message });
   }
 });
 
@@ -1802,6 +1843,8 @@ router.post("/login", loginUser);
 router.post("/resend", ResendVerification);
 router.post("/verify", VerifyEmail);
 router.post("/recover", RecoverPassword);
+router.post("/verifypasswordotp", VerifyPasswordOTP);
+router.post("/reset", ResetPassword);
 var UserRoutes_default = router;
 
 // src/routes/GoalRoutes.ts

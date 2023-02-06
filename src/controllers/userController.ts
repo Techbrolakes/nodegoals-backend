@@ -4,6 +4,8 @@ import User from '@models/UserModel';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import { SendVerificationOTPEmail, VerifyUserEmail, generateToken } from '@utils/util';
+import { CustomRequest } from '@middleware/authMiddleware';
+import { sendOTP } from '@services/mailgen';
 dotenv.config();
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -100,26 +102,74 @@ export const VerifyEmail = async (req: Request, res: Response) => {
         if (!email && !otp) {
             return res.status(404).json({ success: false, message: 'Otp & Email not found' });
         }
-        const result = await VerifyUserEmail({ email, otp });
-        console.log(result);
+        await VerifyUserEmail({ email, otp });
         res.status(200).json({ success: true, message: 'Email Successfully verified, Welcome to Goalbase' });
     } catch (error: any) {
         return res.status(404).json({ success: false, message: error.message });
     }
 };
 
+// Recover Password Function
 export const RecoverPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
     try {
         const user = await User.findOne({ email });
+        if (!user?.verified) {
+            await SendVerificationOTPEmail(email);
+            return res
+                .status(404)
+                .json({ success: false, message: `Email is not verified yet, A mail has been sent to your inbox` });
+        }
 
         if (user) {
-            await SendVerificationOTPEmail(email);
+            const otpDetails = {
+                email,
+                subject: 'Reset Password',
+                message: 'Enter the code below to reset your password',
+                duration: 1,
+            };
+            await sendOTP(otpDetails);
             return res.status(404).json({ success: true, message: `A reset email has been sent to ${email}` });
         } else {
             return res.status(404).json({ success: false, message: `Email Does Not Exist` });
         }
     } catch (error: any) {
-        throw new Error(error.message);
+        return res.status(404).json({ success: false, message: error.message });
+    }
+};
+
+// Verify Password OTP
+export const VerifyPasswordOTP = async (req: Request, res: Response) => {
+    const { email, otp } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ success: false, message: 'Email does not exist' });
+        }
+        if (!email && !otp) {
+            return res.status(404).json({ success: false, message: 'Otp & Email not found' });
+        }
+        await VerifyUserEmail({ email, otp });
+        res.status(200).json({
+            success: true,
+            message: 'OTP Successfully Verified, Kindly Reset Password',
+            token: generateToken(user._id),
+        });
+    } catch (error: any) {
+        return res.status(404).json({ success: false, message: error.message });
+    }
+};
+
+// Reset Password Function
+export const ResetPassword = async (req: Request, res: Response) => {
+    const { password, confirm_password } = req.body;
+    const userId = (req as CustomRequest).user.id;
+    try {
+        const token = generateToken(userId);
+        const user = await User.updateOne({ userId }, { password, confirm_password });
+        if (userId) {
+        }
+    } catch (error: any) {
+        return res.status(404).json({ success: false, message: error.message });
     }
 };

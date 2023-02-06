@@ -58,7 +58,7 @@ export const VerifyOtp = async ({ email, otp }: IEmailOTP) => {
         // ensure otp record exists
         const matchedOTPRecord = await OTP.findOne({ email });
         if (!matchedOTPRecord) {
-            throw new Error('User Does Not Exist');
+            throw new Error('Try resending the otp record');
         }
         const { expiresAt } = matchedOTPRecord;
         // checking for expired code
