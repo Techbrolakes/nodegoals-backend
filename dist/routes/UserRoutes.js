@@ -376,13 +376,39 @@ var VerifyPasswordOTP = (req, res) => __async(void 0, null, function* () {
   }
 });
 var ResetPassword = (req, res) => __async(void 0, null, function* () {
-  const { password, confirm_password } = req.body;
-  const userId = req.user.id;
+  const { password, email, otp, confirm_password } = req.body;
   try {
-    const token = generateToken(userId);
-    const user = yield UserModel_default.updateOne({ userId }, { password, confirm_password });
-    if (userId) {
+    if (!email) {
+      throw Error("Email Field is required");
     }
+    if (!otp) {
+      throw Error("OTP Field is required");
+    }
+    if (!password) {
+      throw Error("Password Field is required");
+    }
+    if (!confirm_password) {
+      throw Error("Confirm Passsword Field is required");
+    }
+    if (password !== confirm_password) {
+      throw Error("Password Mismatch");
+    }
+    const validOTP = yield VerifyOtp({ email, otp });
+    if (!validOTP) {
+      throw Error("Invalid code passed. check your inbox");
+    }
+    const salt = yield import_bcrypt.default.genSalt(10);
+    const hash_password = yield import_bcrypt.default.hash(password, salt);
+    const hash_confirm_password = yield import_bcrypt.default.hash(confirm_password, salt);
+    yield UserModel_default.updateOne(
+      { email },
+      {
+        confirm_password: hash_confirm_password,
+        password: hash_password
+      }
+    );
+    yield deleteOtp(email);
+    return res.status(200).json({ succes: true, message: "Password Successfully Changed" });
   } catch (error) {
     return res.status(404).json({ success: false, message: error.message });
   }

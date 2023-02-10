@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import User from '@models/UserModel';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import { SendVerificationOTPEmail, VerifyUserEmail, generateToken } from '@utils/util';
+import { SendVerificationOTPEmail, VerifyOtp, VerifyUserEmail, deleteOtp, generateToken } from '@utils/util';
 import { CustomRequest } from '@middleware/authMiddleware';
 import { sendOTP } from '@services/mailgen';
 dotenv.config();
@@ -162,13 +162,42 @@ export const VerifyPasswordOTP = async (req: Request, res: Response) => {
 
 // Reset Password Function
 export const ResetPassword = async (req: Request, res: Response) => {
-    const { password, confirm_password } = req.body;
-    const userId = (req as CustomRequest).user.id;
+    const { password, email, otp, confirm_password } = req.body;
     try {
-        const token = generateToken(userId);
-        const user = await User.updateOne({ userId }, { password, confirm_password });
-        if (userId) {
+        if (!email) {
+            throw Error('Email Field is required');
         }
+        if (!otp) {
+            throw Error('OTP Field is required');
+        }
+        if (!password) {
+            throw Error('Password Field is required');
+        }
+        if (!confirm_password) {
+            throw Error('Confirm Passsword Field is required');
+        }
+        if (password !== confirm_password) {
+            throw Error('Password Mismatch');
+        }
+        const validOTP = await VerifyOtp({ email, otp });
+        if (!validOTP) {
+            throw Error('Invalid code passed. check your inbox');
+        }
+
+        // Hash Password
+        const salt = await bcrypt.genSalt(10);
+        const hash_password = await bcrypt.hash(password, salt);
+        const hash_confirm_password = await bcrypt.hash(confirm_password, salt);
+
+        await User.updateOne(
+            { email },
+            {
+                confirm_password: hash_confirm_password,
+                password: hash_password,
+            },
+        );
+        await deleteOtp(email);
+        return res.status(200).json({ succes: true, message: 'Password Successfully Changed' });
     } catch (error: any) {
         return res.status(404).json({ success: false, message: error.message });
     }
