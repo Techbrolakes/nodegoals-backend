@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/app.js",
   "scripts": {
-    "build": "npm install && tsup src && dist/app.js",
+    "build": "npm install && tsc src && dist/app.js",
     "start": "node dist/app.js",
     "dev": "concurrently \"tsup src --watch\" \"nodemon dist/app.js\"",
     "lint": "eslint . --fix",
