@@ -7,8 +7,8 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const connectDB = async () => {
-    mongoose_1.default.set('strictQuery', false);
-    const conn = await mongoose_1.default.connect(process.env.DB_HOST || "");
+    mongoose_1.default.set('strictQuery', true);
+    const conn = await mongoose_1.default.connect(process.env.DB_HOST || '');
     return conn;
 };
 exports.default = connectDB;
