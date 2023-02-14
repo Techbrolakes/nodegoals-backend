@@ -4,7 +4,7 @@
   "description": "",
   "main": "build/app.js",
   "scripts": {
-    "build": "tsc && node build/app.js",
+    "build": "npm install && tsc && node build/app.js",
     "start": "npm run build && node build/app.js",
     "dev": "concurrently \"tsup source --watch\" \"nodemon build/app.js\"",
     "lint": "eslint . --fix",
