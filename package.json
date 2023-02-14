@@ -2,11 +2,11 @@
   "name": "simple-goals-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/app.js",
+  "main": "build/app.js",
   "scripts": {
-    "build": "npm install && tsup src && node dist/app.js",
-    "start": "node dist/app.js",
-    "dev": "concurrently \"tsup src --watch\" \"nodemon dist/app.js\"",
+    "build": "tsc && node build/app.js",
+    "start": "node build/app.js",
+    "dev": "concurrently \"tsup source --watch\" \"nodemon build/app.js\"",
     "lint": "eslint . --fix",
     "type-check": "tsc --project tsconfig.json --pretty --noEmit"
   },
@@ -45,19 +45,9 @@
     "colors": "^1.4.0",
     "concurrently": "^7.6.0",
     "eslint": "^8.32.0",
-    "module-alias": "^2.2.2",
     "morgan": "^1.10.0",
     "prettier": "^2.8.3",
     "tsup": "^6.5.0",
     "typescript": "^4.9.4"
-  },
-  "_moduleAliases": {
-    "@config/*": "dist/config/*",
-    "@controllers/*": "dist/controllers/*",
-    "middleware/*": "dist/middleware/*",
-    "models/*": "dist/models/*",
-    "@routes/*": "dist/routes/*",
-    "@services/*": "dist/services/*",
-    "@utils/*": "dist/utils/*"
   }
 }
